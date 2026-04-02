@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setcord - Select Server</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="servers-page">
+        <div class="user-bar">
+            <% if (user.avatar) { %>
+                <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=64" alt="">
+            <% } %>
+            <span><%= user.globalName || user.username %></span>
+            <a href="/auth/logout" class="btn btn-ghost btn-sm" style="margin-left: 10px;">Logout</a>
+        </div>
+
+        <div class="page-header">
+            <h1>Select a Server</h1>
+            <p>Choose a server to manage with Setcord</p>
+        </div>
+
+        <div class="server-grid" id="server-grid">
+            <div class="loading-spinner">Loading your servers...</div>
+        </div>
+    </div>
+
+    <script>
+        const CLIENT_ID = '<%= clientId %>';
+
+        async function loadServers() {
+            const grid = document.getElementById('server-grid');
+
+            try {
+                const res = await fetch('/api/servers');
+                const data = await res.json();
+
+                if (!data.success) {
+                    grid.innerHTML = '<div class="empty-state"><p>Failed to load servers</p></div>';
+                    return;
+                }
+
+                if (data.servers.length === 0) {
+                    grid.innerHTML = '<div class="empty-state"><p>No servers found where you have Admin permission.</p></div>';
+                    return;
+                }
+
+                grid.innerHTML = '';
+
+                data.servers.forEach((server) => {
+                    const iconHtml = server.icon
+                        ? `<img src="https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png?size=128" alt="">`
+                        : escapeHtml(server.name.charAt(0).toUpperCase());
+
+                    if (server.botPresent) {
+                        const card = document.createElement('a');
+                        card.href = `/dashboard/${server.id}/channels`;
+                        card.className = 'server-card';
+                        card.innerHTML = `
+                            <div class="server-icon">${iconHtml}</div>
+                            <div class="server-card-info">
+                                <h3>${escapeHtml(server.name)}</h3>
+                                <div class="status">
+                                    <span class="status-dot active"></span>
+                                    Bot Active
+                                </div>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    } else {
+                        const card = document.createElement('a');
+                        card.href = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&scope=bot&permissions=8&guild_id=${server.id}`;
+                        card.target = '_blank';
+                        card.className = 'server-card';
+                        card.innerHTML = `
+                            <div class="server-icon">${iconHtml}</div>
+                            <div class="server-card-info">
+                                <h3>${escapeHtml(server.name)}</h3>
+                                <div class="status">
+                                    <span class="status-dot inactive"></span>
+                                    No Bot
+                                </div>
+                            </div>
+                            <span class="invite-badge">Invite Bot</span>
+                        `;
+                        grid.appendChild(card);
+                    }
+                });
+            } catch (err) {
+                grid.innerHTML = '<div class="empty-state"><p>Failed to load servers. Please refresh.</p></div>';
+                console.error(err);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        loadServers();
+    </script>
+</body>
+</html>

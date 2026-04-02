@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setcord - Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #1a1a2e;
+            color: #fff;
+        }
+        .login-container {
+            text-align: center;
+            padding: 40px;
+            background: #16213e;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        h1 { margin-bottom: 10px; }
+        p { color: #aaa; margin-bottom: 30px; }
+        .login-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #5865F2;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .login-btn:hover { background: #4752C4; }
+        .error {
+            color: #ff6b6b;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Setcord</h1>
+        <p>Discord Server Control Panel</p>
+        <a href="/auth/discord" class="login-btn" id="login-btn">Login with Discord</a>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <p class="error">
+                <% if (error === 'no_code') { %>
+                    Login was cancelled. Please try again.
+                <% } else if (error === 'auth_failed') { %>
+                    Authentication failed. Please try again.
+                <% } else { %>
+                    An error occurred. Please try again.
+                <% } %>
+            </p>
+        <% } %>
+    </div>
+</body>
+</html>

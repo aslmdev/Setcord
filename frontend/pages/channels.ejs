@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setcord - Channel Manager</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-layout">
+        <%- include('../components/sidebar', { guild, activePage: 'channels' }) %>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1>Channel Manager</h1>
+                <p>Design and structure your Discord ecosystem with precision.</p>
+            </div>
+
+            <div class="two-col">
+                <!-- LEFT: Hierarchy Editor -->
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Hierarchy Editor</h3>
+                            <button class="btn btn-success btn-sm" onclick="toggleCategoryForm()">+ New Category</button>
+                        </div>
+
+                        <!-- Create Category Form (hidden) -->
+                        <div class="inline-form" id="category-form" style="display:none; margin-bottom: 16px;">
+                            <div class="form-group" style="margin-bottom:8px;">
+                                <label>Category Name</label>
+                                <input type="text" class="form-input" id="category-name" placeholder="e.g. Information">
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn btn-ghost btn-sm" onclick="toggleCategoryForm()">Cancel</button>
+                                <button class="btn btn-success btn-sm" onclick="createCategory()">Create</button>
+                            </div>
+                        </div>
+
+                        <!-- Channel List -->
+                        <div id="channel-list">
+                            <div class="loading-spinner">Loading channels...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Create Channel Form -->
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Create Channel</h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Channel Name</label>
+                            <input type="text" class="form-input" id="channel-name" placeholder="e.g. general-chat">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Type</label>
+                                <select class="form-input" id="channel-type">
+                                    <option value="text">📝 Text Channel</option>
+                                    <option value="voice">🔊 Voice Channel</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select class="form-input" id="channel-category">
+                                    <option value="">No Category</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="createChannel()" id="create-channel-btn">Create Channel</button>
+                    </div>
+
+                    <!-- Rename Channel Form (shown when editing) -->
+                    <div class="card" id="rename-card" style="display:none;">
+                        <div class="card-header">
+                            <h3>Rename Channel</h3>
+                        </div>
+                        <div class="form-group">
+                            <label>New Name</label>
+                            <input type="text" class="form-input" id="rename-input" placeholder="new-name">
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-ghost" onclick="cancelRename()">Cancel</button>
+                            <button class="btn btn-primary" onclick="submitRename()">Save</button>
+                        </div>
+                        <input type="hidden" id="rename-channel-id">
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast" style="display:none;"></div>
+
+    <script>
+        const GUILD_ID = '<%= guild.id %>';
+        let channelsData = null;
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast ' + type;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+
+        // ---- LOAD CHANNELS ----
+        async function loadChannels() {
+            const container = document.getElementById('channel-list');
+            const categorySelect = document.getElementById('channel-category');
+
+            try {
+                const res = await fetch(`/api/${GUILD_ID}/channels`);
+                const data = await res.json();
+
+                if (!data.success) {
+                    container.innerHTML = `<div class="empty-state"><p>${data.error}</p></div>`;
+                    return;
+                }
+
+                channelsData = data.data;
+                let html = '';
+
+                // Update category dropdown
+                categorySelect.innerHTML = '<option value="">No Category</option>';
+                data.data.categories.forEach((cat) => {
+                    categorySelect.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+                });
+
+                // Render uncategorized
+                if (data.data.uncategorized.length > 0) {
+                    html += renderChannelGroup('Uncategorized', data.data.uncategorized, null);
+                }
+
+                // Render categories
+                data.data.categories.forEach((cat) => {
+                    html += renderChannelGroup(cat.name, cat.channels, cat.id);
+                });
+
+                if (!html) {
+                    html = '<div class="empty-state"><p>No channels found. Create one!</p></div>';
+                }
+
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = '<div class="empty-state"><p>Failed to load channels.</p></div>';
+                console.error(err);
+            }
+        }
+
+        function renderChannelGroup(name, channels, categoryId) {
+            let html = `<div class="category-section">
+                <div class="category-header">
+                    <span class="category-name">▸ ${escapeHtml(name)}</span>
+                    ${categoryId ? `<button class="action-btn delete" onclick="deleteChannel('${categoryId}')" title="Delete category">🗑️</button>` : ''}
+                </div>`;
+
+            channels.forEach((ch) => {
+                const icon = ch.type === 'voice' ? '🔊' : '#';
+                html += `
+                    <div class="channel-item">
+                        <div class="channel-info">
+                            <span class="channel-icon">${icon}</span>
+                            <span class="channel-name">${escapeHtml(ch.name)}</span>
+                        </div>
+                        <div class="channel-actions">
+                            <button class="action-btn" onclick="startRename('${ch.id}', '${escapeHtml(ch.name)}')" title="Rename">✏️</button>
+                            <button class="action-btn delete" onclick="deleteChannel('${ch.id}')" title="Delete">🗑️</button>
+                        </div>
+                    </div>`;
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        // ---- CREATE CHANNEL ----
+        async function createChannel() {
+            const name = document.getElementById('channel-name').value.trim();
+            const type = document.getElementById('channel-type').value;
+            const parentId = document.getElementById('channel-category').value;
+
+            if (!name) { showToast('Enter a channel name', 'error'); return; }
+
+            const btn = document.getElementById('create-channel-btn');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/${GUILD_ID}/channels`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, type, parentId: parentId || undefined }),
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast(`Channel #${data.channel.name} created!`, 'success');
+                    document.getElementById('channel-name').value = '';
+                    loadChannels();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Failed to create channel', 'error');
+            }
+            btn.disabled = false;
+        }
+
+        // ---- DELETE CHANNEL ----
+        async function deleteChannel(channelId) {
+            if (!confirm('Are you sure you want to delete this channel?')) return;
+
+            try {
+                const res = await fetch(`/api/${GUILD_ID}/channels/${channelId}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('Channel deleted', 'success');
+                    loadChannels();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Failed to delete channel', 'error');
+            }
+        }
+
+        // ---- RENAME CHANNEL ----
+        function startRename(channelId, currentName) {
+            document.getElementById('rename-card').style.display = 'block';
+            document.getElementById('rename-input').value = currentName;
+            document.getElementById('rename-channel-id').value = channelId;
+            document.getElementById('rename-input').focus();
+        }
+
+        function cancelRename() {
+            document.getElementById('rename-card').style.display = 'none';
+        }
+
+        async function submitRename() {
+            const channelId = document.getElementById('rename-channel-id').value;
+            const name = document.getElementById('rename-input').value.trim();
+
+            if (!name) { showToast('Enter a name', 'error'); return; }
+
+            try {
+                const res = await fetch(`/api/${GUILD_ID}/channels/${channelId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast(`Channel renamed to #${data.channel.name}`, 'success');
+                    cancelRename();
+                    loadChannels();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Failed to rename channel', 'error');
+            }
+        }
+
+        // ---- CREATE CATEGORY ----
+        function toggleCategoryForm() {
+            const form = document.getElementById('category-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function createCategory() {
+            const name = document.getElementById('category-name').value.trim();
+            if (!name) { showToast('Enter a category name', 'error'); return; }
+
+            try {
+                const res = await fetch(`/api/${GUILD_ID}/categories`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast(`Category "${data.category.name}" created!`, 'success');
+                    document.getElementById('category-name').value = '';
+                    toggleCategoryForm();
+                    loadChannels();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Failed to create category', 'error');
+            }
+        }
+
+        // Load on start
+        loadChannels();
+    </script>
+</body>
+</html>
