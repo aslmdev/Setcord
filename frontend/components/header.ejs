@@ -1,0 +1,24 @@
+<!-- Page Header Component -->
+<div class="page-topbar">
+    <div class="page-header" style="margin-bottom:0;">
+        <h1><%= title %></h1>
+        <% if (typeof subtitle !== 'undefined' && subtitle) { %>
+            <p><%= subtitle %></p>
+        <% } %>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;">
+        <!-- Test mode toggle -->
+        <div id="tm-status-badge" style="display:none;
+            font-size:11px; font-weight:700; color:#fbbf24;
+            background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3);
+            border-radius:6px; padding:4px 10px;
+            animation: tmPulse 2.5s ease-in-out infinite;
+            white-space:nowrap;">
+            ⚡ TEST MODE
+        </div>
+        <button id="test-mode-btn" onclick="if(window.Setcord)Setcord.TestMode.toggle()">
+            ⚡ Test Mode
+        </button>
+    </div>
+</div>

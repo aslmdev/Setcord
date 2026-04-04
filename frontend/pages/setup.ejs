@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setcord — Fast Setup</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app-layout">
+    <%- include('../components/sidebar', { guild, activePage: 'setup' }) %>
+
+    <main class="main-content setup-page">
+        <div class="page-header">
+            <h1>⚡ Fast Setup</h1>
+            <p>One-click channel setups — pick a template, customize it, then deploy.</p>
+        </div>
+
+        <!-- Step 1: Pick Template -->
+        <div class="card" id="step-templates">
+            <div class="card-header">
+                <h3>Step 1 — Choose a Template</h3>
+            </div>
+            <div id="template-grid" class="template-grid">
+                <div class="loading-spinner">Loading templates…</div>
+            </div>
+        </div>
+
+        <!-- Step 2: Pick Style (shown after template selected) -->
+        <div class="card" id="step-style" style="display:none;">
+            <div class="card-header">
+                <h3>Step 2 — Choose a Style</h3>
+                <span style="font-size:12px;color:var(--text-muted);">Pick how the channels are named</span>
+            </div>
+            <div class="style-pills" id="style-pills"></div>
+
+            <!-- Style preview row -->
+            <div style="background:var(--bg-input);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--text-muted);">
+                Preview: <span id="style-preview-text" style="color:var(--text-primary);font-weight:500;"></span>
+            </div>
+        </div>
+
+        <!-- Step 3: Review & Edit (shown after style selected) -->
+        <div class="card" id="step-review" style="display:none;">
+            <div class="card-header">
+                <h3>Step 3 — Review & Edit</h3>
+                <button class="btn btn-ghost btn-sm" onclick="addCustomChannel()">＋ Add Channel</button>
+            </div>
+
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+                Click any name to edit it. Remove channels you don't need.
+            </p>
+
+            <!-- Category name -->
+            <div id="category-row" style="margin-bottom:8px;"></div>
+
+            <!-- Channel preview list -->
+            <div class="channel-preview-list" id="channel-preview-list"></div>
+
+            <!-- Deploy button -->
+            <div style="margin-top:18px;">
+                <div id="setup-error" style="display:none;" class="api-error-banner" style="margin-bottom:12px;">
+                    <span>⚠</span><span id="setup-error-msg"></span>
+                </div>
+                <button class="btn btn-primary setup-apply-btn" id="apply-btn" onclick="applySetup()">
+                    🚀 Create These Channels
+                </button>
+            </div>
+        </div>
+
+        <!-- Results (shown after apply) -->
+        <div class="card" id="step-results" style="display:none;">
+            <div class="card-header">
+                <h3>Setup Complete!</h3>
+            </div>
+            <div class="setup-result-list" id="result-list"></div>
+            <div style="margin-top:18px;display:flex;gap:10px;">
+                <a href="/dashboard/<%= guild.id %>/channels" class="btn btn-primary">View Channels →</a>
+                <button class="btn btn-ghost" onclick="resetSetup()">Setup Again</button>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="/js/setcord.js"></script>
+<script>
+var GUILD_ID = '<%= guild.id %>';
+var allTemplates = [];
+var selectedTemplate = null;
+var selectedStyle = null;
+var currentChannels = []; // editable list of {name, type}
+var currentCategoryName = null;
+
+// ---- LOAD TEMPLATES ----
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/setup/templates')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) { document.getElementById('template-grid').innerHTML = '<p style="color:var(--accent-red)">Failed to load templates.</p>'; return; }
+            allTemplates = data.templates;
+            renderTemplates(data.templates);
+        })
+        .catch(function() {
+            document.getElementById('template-grid').innerHTML = '<p style="color:var(--accent-red)">Network error loading templates.</p>';
+        });
+});
+
+function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// ---- STEP 1: RENDER TEMPLATES ----
+function renderTemplates(templates) {
+    var grid = document.getElementById('template-grid');
+    grid.innerHTML = '';
+    templates.forEach(function(tmpl) {
+        var card = document.createElement('div');
+        card.className = 'template-card';
+        card.dataset.id = tmpl.id;
+        card.innerHTML =
+            '<div class="template-card-icon">' + tmpl.icon + '</div>' +
+            '<div class="template-card-name">' + escapeHtml(tmpl.name) + '</div>' +
+            '<div class="template-card-desc">' + escapeHtml(tmpl.description) + '</div>';
+        card.onclick = function() { selectTemplate(tmpl); };
+        grid.appendChild(card);
+    });
+}
+
+function selectTemplate(tmpl) {
+    selectedTemplate = tmpl;
+    selectedStyle = null;
+    currentChannels = [];
+
+    // Highlight selected card
+    document.querySelectorAll('.template-card').forEach(function(c) { c.classList.remove('selected'); });
+    document.querySelector('.template-card[data-id="' + tmpl.id + '"]').classList.add('selected');
+
+    // Show step 2
+    var styleStep = document.getElementById('step-style');
+    styleStep.style.display = 'block';
+    renderStyles(tmpl.styles);
+
+    // Hide step 3+
+    document.getElementById('step-review').style.display = 'none';
+    document.getElementById('step-results').style.display = 'none';
+
+    styleStep.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ---- STEP 2: RENDER STYLES ----
+function renderStyles(styles) {
+    var pills = document.getElementById('style-pills');
+    pills.innerHTML = '';
+    styles.forEach(function(style) {
+        var pill = document.createElement('button');
+        pill.className = 'style-pill';
+        pill.textContent = style.label;
+        pill.dataset.id = style.id;
+        pill.onclick = function() { selectStyle(style); };
+        pills.appendChild(pill);
+    });
+    document.getElementById('style-preview-text').textContent = '';
+}
+
+function selectStyle(style) {
+    selectedStyle = style;
+
+    // Highlight pill
+    document.querySelectorAll('.style-pill').forEach(function(p) { p.classList.remove('selected'); });
+    document.querySelector('.style-pill[data-id="' + style.id + '"]').classList.add('selected');
+
+    // Update preview text
+    document.getElementById('style-preview-text').textContent = style.preview;
+
+    // Deep copy channels
+    currentChannels = style.channels.map(function(ch) { return { name: ch.name, type: 'text' }; });
+    currentCategoryName = style.categoryName;
+
+    // Show step 3
+    var reviewStep = document.getElementById('step-review');
+    reviewStep.style.display = 'block';
+    document.getElementById('step-results').style.display = 'none';
+    renderReview();
+    reviewStep.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ---- STEP 3: RENDER REVIEW ----
+function renderReview() {
+    // Category name row
+    var catRow = document.getElementById('category-row');
+    if (currentCategoryName !== null) {
+        catRow.innerHTML =
+            '<div class="category-preview-badge">' +
+            '<span>📁</span>' +
+            '<input type="text" class="category-name-input" id="cat-name-input" value="' + escapeHtml(currentCategoryName) + '" placeholder="Category name" maxlength="100">' +
+            '<span style="font-size:10px;color:rgba(167,139,250,0.5);flex-shrink:0;">category</span>' +
+            '</div>';
+    } else {
+        catRow.innerHTML = '<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">No category (channels created at root level)</p>';
+    }
+
+    // Channel list
+    var list = document.getElementById('channel-preview-list');
+    list.innerHTML = '';
+    currentChannels.forEach(function(ch, idx) {
+        var row = document.createElement('div');
+        row.className = 'preview-channel-row';
+        var icon = '#';
+        row.innerHTML =
+            '<span class="preview-channel-icon">' + icon + '</span>' +
+            '<input type="text" class="preview-channel-name-input" value="' + escapeHtml(ch.name) + '" maxlength="100" data-idx="' + idx + '" onchange="updateChannelName(' + idx + ', this.value)">' +
+            '' +
+            '<button class="preview-remove-btn" onclick="removeChannel(' + idx + ')" title="Remove">✕</button>';
+        list.appendChild(row);
+    });
+
+    if (currentChannels.length === 0) {
+        list.innerHTML = '<div class="empty-state" style="padding:20px;"><p>No channels. Add one below.</p></div>';
+    }
+}
+
+function updateChannelName(idx, val) { currentChannels[idx].name = val; }
+function updateChannelType(idx, val) { currentChannels[idx].type = val; renderReview(); }
+
+function removeChannel(idx) {
+    currentChannels.splice(idx, 1);
+    renderReview();
+}
+
+function addCustomChannel() {
+    currentChannels.push({ name: 'new-channel', type: 'text' });
+    renderReview();
+    // Focus last input
+    var inputs = document.querySelectorAll('.preview-channel-name-input');
+    if (inputs.length > 0) {
+        var last = inputs[inputs.length - 1];
+        last.focus();
+        last.select();
+    }
+}
+
+// ---- APPLY SETUP ----
+function applySetup() {
+    if (!selectedTemplate || !selectedStyle) { Setcord.showToast('Select a template and style first.', 'warning'); return; }
+    if (currentChannels.length === 0) { Setcord.showToast('Add at least one channel.', 'warning'); return; }
+
+    // Read current category name from input
+    var catInput = document.getElementById('cat-name-input');
+    var categoryName = catInput ? catInput.value.trim() : currentCategoryName;
+
+    // Collect current channel names from inputs (may have been edited inline)
+    var inputs = document.querySelectorAll('.preview-channel-name-input');
+    inputs.forEach(function(inp) {
+        var idx = parseInt(inp.dataset.idx);
+        if (!isNaN(idx) && currentChannels[idx]) currentChannels[idx].name = inp.value.trim();
+    });
+
+    // Validate
+    for (var i = 0; i < currentChannels.length; i++) {
+        if (!currentChannels[i].name) {
+            Setcord.showToast('Channel #' + (i + 1) + ' has no name.', 'error');
+            return;
+        }
+    }
+
+    var btn = document.getElementById('apply-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Creating channels…';
+    document.getElementById('setup-error').style.display = 'none';
+
+    fetch('/setup/' + GUILD_ID + '/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            templateId: selectedTemplate.id,
+            styleId: selectedStyle.id,
+            channels: currentChannels,
+            categoryName: categoryName || null,
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.textContent = '🚀 Create These Channels';
+
+        if (!data.success && data.error) {
+            var errEl = document.getElementById('setup-error');
+            document.getElementById('setup-error-msg').textContent = data.error;
+            errEl.style.display = 'flex';
+            return;
+        }
+
+        // Show results
+        document.getElementById('step-results').style.display = 'block';
+        var resultList = document.getElementById('result-list');
+        resultList.innerHTML = '';
+
+        if (data.categoryName) {
+            var catItem = document.createElement('div');
+            catItem.className = 'setup-result-item ok';
+            catItem.innerHTML = '📁 Category: <strong>' + escapeHtml(data.categoryName) + '</strong>';
+            resultList.appendChild(catItem);
+        }
+
+        (data.created || []).forEach(function(ch) {
+            var item = document.createElement('div');
+            item.className = 'setup-result-item ok';
+            item.textContent = '✓ #' + ch.name + ' (' + ch.type + ')';
+            resultList.appendChild(item);
+        });
+
+        (data.failed || []).forEach(function(ch) {
+            var item = document.createElement('div');
+            item.className = 'setup-result-item fail';
+            item.textContent = '✕ ' + ch.name + ' — ' + ch.error;
+            resultList.appendChild(item);
+        });
+
+        var total = (data.created || []).length;
+        var failed = (data.failed || []).length;
+        if (failed === 0) {
+            Setcord.showToast(total + ' channel(s) created!', 'success');
+        } else {
+            Setcord.showToast(total + ' created, ' + failed + ' failed', 'warning');
+        }
+
+        document.getElementById('step-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.textContent = '🚀 Create These Channels';
+        document.getElementById('setup-error-msg').textContent = 'Network error. Please try again.';
+        document.getElementById('setup-error').style.display = 'flex';
+    });
+}
+
+function resetSetup() {
+    selectedTemplate = null; selectedStyle = null; currentChannels = []; currentCategoryName = null;
+    document.querySelectorAll('.template-card').forEach(function(c) { c.classList.remove('selected'); });
+    document.getElementById('step-style').style.display = 'none';
+    document.getElementById('step-review').style.display = 'none';
+    document.getElementById('step-results').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
+
+

@@ -8,28 +8,42 @@
         <% } %>
         <div class="sidebar-header-text">
             <h3><%= guild.name %></h3>
-            <span>Premium Management</span>
+            <span>Setcord Panel</span>
         </div>
     </div>
 
+    <!-- Test Mode Banner (injected by JS when active) -->
+    <div id="test-mode-sidebar-banner" style="display:none;
+        background: rgba(245,158,11,0.1);
+        border-bottom: 1px solid rgba(245,158,11,0.2);
+        padding: 7px 14px;
+        font-size: 11px;
+        color: #fbbf24;
+        display: none;
+        align-items: center;
+        gap: 6px;">
+        <span>⚡</span> Test Mode Active
+    </div>
+
     <nav class="sidebar-nav">
-        <a href="/dashboard/<%= guild.id %>" class="<%= activePage === 'dashboard' ? 'active' : 'disabled' %>">
-            <span class="nav-icon">🏠</span> Dashboard
-        </a>
-        <a href="#" class="disabled">
-            <span class="nav-icon">🤖</span> AI Setup
-        </a>
         <a href="/dashboard/<%= guild.id %>/channels" class="<%= activePage === 'channels' ? 'active' : '' %>">
             <span class="nav-icon">💬</span> Channels
         </a>
         <a href="/dashboard/<%= guild.id %>/roles" class="<%= activePage === 'roles' ? 'active' : '' %>">
             <span class="nav-icon">🛡️</span> Roles
         </a>
+        <a href="/dashboard/<%= guild.id %>/setup" class="<%= activePage === 'setup' ? 'active' : '' %>">
+            <span class="nav-icon">⚡</span> Fast Setup
+        </a>
+        <div style="height:1px; background:var(--border-color); margin: 8px 12px;"></div>
+        <a href="#" class="disabled">
+            <span class="nav-icon">📊</span> Analytics
+        </a>
         <a href="#" class="disabled">
             <span class="nav-icon">📋</span> Templates
         </a>
         <a href="#" class="disabled">
-            <span class="nav-icon">📊</span> Analytics
+            <span class="nav-icon">🤖</span> AI Setup
         </a>
         <a href="#" class="disabled">
             <span class="nav-icon">⚙️</span> Settings

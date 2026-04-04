@@ -1,0 +1,79 @@
+{
+  "version": "1.0",
+  "templates": [
+    {
+      "id": "logs-english",
+      "name": "English Logs",
+      "description": "Standard logging channels for all server activity",
+      "icon": "📋",
+      "category": "Logging",
+      "styles": [
+        {
+          "id": "standard",
+          "label": "Standard",
+          "preview": "📋 logs",
+          "categoryName": "📋 Server Logs",
+          "channels": [
+            { "name": "message-logs",  "type": "text", "description": "Deleted and edited messages" },
+            { "name": "voice-logs",    "type": "text", "description": "Voice channel joins, leaves, moves" },
+            { "name": "mute-logs",     "type": "text", "description": "Mutes and unmutes" },
+            { "name": "ban-logs",      "type": "text", "description": "Bans and unbans" },
+            { "name": "kick-logs",     "type": "text", "description": "Kicks from the server" }
+          ]
+        },
+        {
+          "id": "emoji",
+          "label": "With Emoji",
+          "preview": "💬 message-logs",
+          "categoryName": "🛡️ Server Logs",
+          "channels": [
+            { "name": "💬・message-logs", "type": "text", "description": "Deleted and edited messages" },
+            { "name": "🔊・voice-logs",   "type": "text", "description": "Voice channel joins, leaves, moves" },
+            { "name": "🔇・mute-logs",    "type": "text", "description": "Mutes and unmutes" },
+            { "name": "🔨・ban-logs",     "type": "text", "description": "Bans and unbans" },
+            { "name": "👢・kick-logs",    "type": "text", "description": "Kicks from the server" }
+          ]
+        },
+        {
+          "id": "arabic",
+          "label": "Arabic",
+          "preview": "سجل الرسائل",
+          "categoryName": "📋 سجلات السيرفر",
+          "channels": [
+            { "name": "سجل-الرسائل",   "type": "text", "description": "الرسائل المحذوفة والمعدلة" },
+            { "name": "سجل-الصوت",     "type": "text", "description": "الدخول والخروج من قنوات الصوت" },
+            { "name": "سجل-الكتم",     "type": "text", "description": "الكتم وإلغاء الكتم" },
+            { "name": "سجل-الباند",    "type": "text", "description": "الحظر ورفع الحظر" },
+            { "name": "سجل-الطرد",     "type": "text", "description": "طرد الأعضاء من السيرفر" }
+          ]
+        },
+        {
+          "id": "arabic-emoji",
+          "label": "Arabic + Emoji",
+          "preview": "💬 سجل الرسائل",
+          "categoryName": "🛡️ سجلات السيرفر",
+          "channels": [
+            { "name": "💬・سجل-الرسائل", "type": "text", "description": "الرسائل المحذوفة والمعدلة" },
+            { "name": "🔊・سجل-الصوت",   "type": "text", "description": "الدخول والخروج من قنوات الصوت" },
+            { "name": "🔇・سجل-الكتم",   "type": "text", "description": "الكتم وإلغاء الكتم" },
+            { "name": "🔨・سجل-الباند",  "type": "text", "description": "الحظر ورفع الحظر" },
+            { "name": "👢・سجل-الطرد",   "type": "text", "description": "طرد الأعضاء من السيرفر" }
+          ]
+        },
+        {
+          "id": "clean",
+          "label": "Clean / No Category",
+          "preview": "message-logs",
+          "categoryName": null,
+          "channels": [
+            { "name": "message-logs", "type": "text", "description": "Deleted and edited messages" },
+            { "name": "voice-logs",   "type": "text", "description": "Voice channel joins, leaves, moves" },
+            { "name": "mute-logs",    "type": "text", "description": "Mutes and unmutes" },
+            { "name": "ban-logs",     "type": "text", "description": "Bans and unbans" },
+            { "name": "kick-logs",    "type": "text", "description": "Kicks from the server" }
+          ]
+        }
+      ]
+    }
+  ]
+}

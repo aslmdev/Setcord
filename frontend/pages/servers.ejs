@@ -34,10 +34,22 @@
 
             try {
                 const res = await fetch('/api/servers');
+                
+                // If we got redirected to login page because session died
+                if (res.redirected && res.url.includes('/login')) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("Server returned a non-JSON response (status: " + res.status + ")");
+                }
+
                 const data = await res.json();
 
                 if (!data.success) {
-                    grid.innerHTML = '<div class="empty-state"><p>Failed to load servers</p></div>';
+                    grid.innerHTML = '<div class="empty-state"><p>Failed to load servers: ' + escapeHtml(data.error || 'Unknown error') + '</p></div>';
                     return;
                 }
 
@@ -88,8 +100,8 @@
                     }
                 });
             } catch (err) {
-                grid.innerHTML = '<div class="empty-state"><p>Failed to load servers. Please refresh.</p></div>';
-                console.error(err);
+                grid.innerHTML = `<div class="empty-state"><p>Failed to load servers. Please refresh.</p><p style="color:var(--accent-red);font-size:12px;margin-top:10px;">Error: ${escapeHtml(err.message)}</p></div>`;
+                console.error('Fetch error:', err);
             }
         }
 

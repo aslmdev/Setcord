@@ -24,21 +24,33 @@ async function requireGuildAdmin(req, res, next) {
             return res.status(400).json({ success: false, error: 'Invalid server ID' });
         }
 
-        // 2. Fetch user's guilds from Discord (fresh permission check every time)
+        // 2. Fetch user's guilds from Discord (with caching and timeout)
         let guilds;
         try {
-            const guildsResponse = await axios.get(`${DISCORD_API}/users/@me/guilds`, {
-                headers: {
-                    Authorization: `${req.session.tokenType} ${req.session.accessToken}`,
-                },
-            });
-            guilds = guildsResponse.data;
+            if (req.session.serversCache && (Date.now() - req.session.serversCacheTime) < 5 * 60 * 1000) {
+                guilds = req.session.serversCache;
+            } else {
+                const guildsResponse = await axios.get(`${DISCORD_API}/users/@me/guilds`, {
+                    headers: {
+                        Authorization: `${req.session.tokenType} ${req.session.accessToken}`,
+                    },
+                    timeout: 10000 // 10 second timeout
+                });
+                guilds = guildsResponse.data;
+                req.session.serversCache = guilds;
+                req.session.serversCacheTime = Date.now();
+            }
         } catch (err) {
             console.error('[GUILD] Failed to fetch user guilds:', err.response?.data || err.message);
-            return res.status(401).json({
-                success: false,
-                error: 'Session expired. Please re-login.',
-            });
+            // Fallback to cache if request timed out or rate limited
+            if (req.session.serversCache) {
+                guilds = req.session.serversCache;
+            } else {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Session expired or Discord API rate limit. Please re-login.',
+                });
+            }
         }
 
         // 3. Find target guild and check ADMINISTRATOR

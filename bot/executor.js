@@ -14,9 +14,6 @@ client.once(Events.ClientReady, () => {
     isReady = true;
 });
 
-/**
- * Start the bot — call this once from server.js
- */
 async function startBot(token) {
     try {
         await client.login(token);
@@ -26,16 +23,10 @@ async function startBot(token) {
     }
 }
 
-/**
- * Check if bot is ready
- */
 function checkReady() {
     if (!isReady) throw new Error('Bot is not ready yet');
 }
 
-/**
- * Get a guild the bot is in
- */
 async function getGuild(guildId) {
     checkReady();
     const guild = await client.guilds.fetch(guildId);
@@ -43,27 +34,41 @@ async function getGuild(guildId) {
     return guild;
 }
 
+// ---- Bot permission helpers ----
+
+function getBotHighestRolePosition(guild) {
+    const botMember = guild.members.cache.get(client.user.id);
+    if (!botMember) return 0;
+    return botMember.roles.highest.position;
+}
+
+function canBotManageRole(guild, role) {
+    const botHighest = getBotHighestRolePosition(guild);
+    // Bot can only manage roles strictly below its highest role
+    return role.position < botHighest;
+}
+
+function buildPermissionError(guild, role) {
+    const botHighest = getBotHighestRolePosition(guild);
+    return `Bot cannot manage the role "${role.name}" (position ${role.position}) ` +
+           `because it is at or above the bot's highest role (position ${botHighest}). ` +
+           `To fix this: go to Discord Server Settings → Roles and drag the bot's role above all roles you want Setcord to manage.`;
+}
+
 // ========================
 // CHANNEL OPERATIONS
 // ========================
 
-/**
- * Fetch all channels in a guild, grouped by category
- */
 async function fetchChannels(guildId) {
     try {
         const guild = await getGuild(guildId);
         const channels = await guild.channels.fetch();
 
-        const result = {
-            categories: [],
-            uncategorized: [],
-        };
-
-        // Collect categories
+        const result = { categories: [], uncategorized: [] };
         const categoryMap = new Map();
+
         channels.forEach((ch) => {
-            if (ch.type === ChannelType.GuildCategory) {
+            if (ch && ch.type === ChannelType.GuildCategory) {
                 categoryMap.set(ch.id, {
                     id: ch.id,
                     name: ch.name,
@@ -73,10 +78,8 @@ async function fetchChannels(guildId) {
             }
         });
 
-        // Assign channels to categories
         channels.forEach((ch) => {
-            if (ch.type === ChannelType.GuildCategory) return;
-
+            if (!ch || ch.type === ChannelType.GuildCategory) return;
             const channelData = {
                 id: ch.id,
                 name: ch.name,
@@ -85,7 +88,6 @@ async function fetchChannels(guildId) {
                 position: ch.position,
                 parentId: ch.parentId,
             };
-
             if (ch.parentId && categoryMap.has(ch.parentId)) {
                 categoryMap.get(ch.parentId).channels.push(channelData);
             } else {
@@ -93,11 +95,7 @@ async function fetchChannels(guildId) {
             }
         });
 
-        // Sort channels within categories by position
-        categoryMap.forEach((cat) => {
-            cat.channels.sort((a, b) => a.position - b.position);
-        });
-
+        categoryMap.forEach((cat) => { cat.channels.sort((a, b) => a.position - b.position); });
         result.categories = Array.from(categoryMap.values()).sort((a, b) => a.position - b.position);
         result.uncategorized.sort((a, b) => a.position - b.position);
 
@@ -108,55 +106,27 @@ async function fetchChannels(guildId) {
     }
 }
 
-/**
- * Create a channel in a guild
- * @param {string} guildId
- * @param {string} channelName
- * @param {string} channelType - 'text' or 'voice'
- * @param {string|null} parentId - category ID (optional)
- */
 async function createChannel(guildId, channelName, channelType = 'text', parentId = null) {
     try {
         const guild = await getGuild(guildId);
-
         const type = channelType === 'voice' ? ChannelType.GuildVoice : ChannelType.GuildText;
-
-        const options = {
-            name: channelName,
-            type: type,
-            reason: 'Created by Setcord dashboard',
-        };
-
-        if (parentId) {
-            options.parent = parentId;
-        }
-
+        const options = { name: channelName, type, reason: 'Created by Setcord' };
+        if (parentId) options.parent = parentId;
         const channel = await guild.channels.create(options);
-
         console.log(`[BOT] Created channel #${channel.name} in ${guild.name}`);
-        return {
-            success: true,
-            channel: { id: channel.id, name: channel.name, type: channelType },
-        };
+        return { success: true, channel: { id: channel.id, name: channel.name, type: channelType } };
     } catch (err) {
         console.error('[BOT] Error creating channel:', err.message);
         return { success: false, error: err.message };
     }
 }
 
-/**
- * Delete a channel
- */
 async function deleteChannel(guildId, channelId) {
     try {
         const guild = await getGuild(guildId);
         const channel = await guild.channels.fetch(channelId);
         if (!channel) return { success: false, error: 'Channel not found' };
-
-        const name = channel.name;
-        await channel.delete('Deleted by Setcord dashboard');
-
-        console.log(`[BOT] Deleted channel #${name} in ${guild.name}`);
+        await channel.delete('Deleted by Setcord');
         return { success: true };
     } catch (err) {
         console.error('[BOT] Error deleting channel:', err.message);
@@ -164,18 +134,12 @@ async function deleteChannel(guildId, channelId) {
     }
 }
 
-/**
- * Rename a channel
- */
 async function renameChannel(guildId, channelId, newName) {
     try {
         const guild = await getGuild(guildId);
         const channel = await guild.channels.fetch(channelId);
         if (!channel) return { success: false, error: 'Channel not found' };
-
-        await channel.setName(newName, 'Renamed by Setcord dashboard');
-
-        console.log(`[BOT] Renamed channel to #${newName} in ${guild.name}`);
+        await channel.setName(newName, 'Renamed by Setcord');
         return { success: true, channel: { id: channel.id, name: newName } };
     } catch (err) {
         console.error('[BOT] Error renaming channel:', err.message);
@@ -183,24 +147,28 @@ async function renameChannel(guildId, channelId, newName) {
     }
 }
 
-/**
- * Create a category
- */
+async function moveChannelToCategory(guildId, channelId, parentId) {
+    try {
+        const guild = await getGuild(guildId);
+        const channel = await guild.channels.fetch(channelId);
+        if (!channel) return { success: false, error: 'Channel not found' };
+        await channel.setParent(parentId, { lockPermissions: false, reason: 'Moved by Setcord' });
+        return { success: true, channel: { id: channel.id, name: channel.name } };
+    } catch (err) {
+        console.error('[BOT] Error moving channel:', err.message);
+        return { success: false, error: err.message };
+    }
+}
+
 async function createCategory(guildId, categoryName) {
     try {
         const guild = await getGuild(guildId);
-
         const category = await guild.channels.create({
             name: categoryName,
             type: ChannelType.GuildCategory,
-            reason: 'Created by Setcord dashboard',
+            reason: 'Created by Setcord',
         });
-
-        console.log(`[BOT] Created category "${category.name}" in ${guild.name}`);
-        return {
-            success: true,
-            category: { id: category.id, name: category.name },
-        };
+        return { success: true, category: { id: category.id, name: category.name } };
     } catch (err) {
         console.error('[BOT] Error creating category:', err.message);
         return { success: false, error: err.message };
@@ -211,69 +179,70 @@ async function createCategory(guildId, categoryName) {
 // ROLE OPERATIONS
 // ========================
 
-/**
- * Fetch all roles in a guild
- */
 async function fetchRoles(guildId) {
     try {
         const guild = await getGuild(guildId);
+        // Fetch fresh members cache for bot so we can get its highest role
+        await guild.members.fetch(client.user.id).catch(() => null);
+
         const roles = await guild.roles.fetch();
+        const botHighestPosition = getBotHighestRolePosition(guild);
 
         const roleList = roles
-            .filter((r) => !r.managed && r.id !== guild.id) // Exclude bot roles and @everyone
+            // Exclude only @everyone (the guild ID role)
+            .filter((r) => r.id !== guild.id)
             .sort((a, b) => b.position - a.position)
             .map((r) => ({
                 id: r.id,
                 name: r.name,
                 color: r.hexColor,
                 position: r.position,
-                memberCount: r.members.size,
+                managed: r.managed,          // true = bot/integration role
+                isAboveBot: r.position >= botHighestPosition,
+                canManage: r.position < botHighestPosition,
+                memberCount: r.members?.size ?? 0,
             }));
 
-        return { success: true, roles: roleList };
+        return {
+            success: true,
+            roles: roleList,
+            botHighestPosition,
+        };
     } catch (err) {
         console.error('[BOT] Error fetching roles:', err.message);
         return { success: false, error: err.message };
     }
 }
 
-/**
- * Create a role
- */
 async function createRole(guildId, name, color) {
     try {
         const guild = await getGuild(guildId);
-
         const role = await guild.roles.create({
-            name: name,
+            name,
             color: color || '#99AAB5',
-            reason: 'Created by Setcord dashboard',
+            reason: 'Created by Setcord',
         });
-
         console.log(`[BOT] Created role "${role.name}" in ${guild.name}`);
-        return {
-            success: true,
-            role: { id: role.id, name: role.name, color: role.hexColor },
-        };
+        return { success: true, role: { id: role.id, name: role.name, color: role.hexColor } };
     } catch (err) {
         console.error('[BOT] Error creating role:', err.message);
         return { success: false, error: err.message };
     }
 }
 
-/**
- * Delete a role
- */
 async function deleteRole(guildId, roleId) {
     try {
         const guild = await getGuild(guildId);
+        await guild.members.fetch(client.user.id).catch(() => null);
         const role = await guild.roles.fetch(roleId);
         if (!role) return { success: false, error: 'Role not found' };
 
-        const name = role.name;
-        await role.delete('Deleted by Setcord dashboard');
+        if (!canBotManageRole(guild, role)) {
+            return { success: false, error: buildPermissionError(guild, role) };
+        }
 
-        console.log(`[BOT] Deleted role "${name}" in ${guild.name}`);
+        await role.delete('Deleted by Setcord');
+        console.log(`[BOT] Deleted role "${role.name}" in ${guild.name}`);
         return { success: true };
     } catch (err) {
         console.error('[BOT] Error deleting role:', err.message);
@@ -281,43 +250,35 @@ async function deleteRole(guildId, roleId) {
     }
 }
 
-/**
- * Edit a role (name and/or color)
- */
 async function editRole(guildId, roleId, updates) {
     try {
         const guild = await getGuild(guildId);
+        await guild.members.fetch(client.user.id).catch(() => null);
         const role = await guild.roles.fetch(roleId);
         if (!role) return { success: false, error: 'Role not found' };
 
-        const editData = { reason: 'Edited by Setcord dashboard' };
+        if (!canBotManageRole(guild, role)) {
+            return { success: false, error: buildPermissionError(guild, role) };
+        }
+
+        const editData = { reason: 'Edited by Setcord' };
         if (updates.name) editData.name = updates.name;
         if (updates.color) editData.color = updates.color;
-
         await role.edit(editData);
 
         console.log(`[BOT] Edited role "${role.name}" in ${guild.name}`);
-        return {
-            success: true,
-            role: { id: role.id, name: role.name, color: role.hexColor },
-        };
+        return { success: true, role: { id: role.id, name: role.name, color: role.hexColor } };
     } catch (err) {
         console.error('[BOT] Error editing role:', err.message);
         return { success: false, error: err.message };
     }
 }
 
-/**
- * Check if the bot is in a specific guild
- */
 function isBotInGuild(guildId) {
     if (!isReady) return false;
     return client.guilds.cache.has(guildId);
 }
 
-/**
- * Get basic guild info for dashboard header
- */
 async function getGuildInfo(guildId) {
     try {
         const guild = await getGuild(guildId);
@@ -340,13 +301,12 @@ module.exports = {
     startBot,
     isBotInGuild,
     getGuildInfo,
-    // Channels
     fetchChannels,
     createChannel,
     deleteChannel,
     renameChannel,
+    moveChannelToCategory,
     createCategory,
-    // Roles
     fetchRoles,
     createRole,
     deleteRole,
