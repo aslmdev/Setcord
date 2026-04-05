@@ -3,114 +3,418 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setcord - Select Server</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
+    <title>Setcord — Select Server</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080812;
+            --card: #0f0f22;
+            --card-hover: #14142e;
+            --purple: #7c3aed;
+            --purple-light: #a78bfa;
+            --purple-glow: rgba(124,58,237,0.2);
+            --green: #10b981;
+            --red: #ef4444;
+            --border: #1c1c3a;
+            --text: #e8e8f0;
+            --muted: #64748b;
+            --font: 'DM Sans', sans-serif;
+            --font-mono: 'DM Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px; left: 50%;
+            transform: translateX(-50%);
+            width: 800px; height: 600px;
+            background: radial-gradient(circle, rgba(124,58,237,0.07) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* ---- Top nav ---- */
+        .topnav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 40px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: rgba(8,8,18,0.9);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+        .logo span { color: var(--purple-light); }
+
+        .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .user-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--purple);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: #fff;
+            overflow: hidden; flex-shrink: 0;
+        }
+
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .logout-btn {
+            padding: 5px 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--muted);
+            font-size: 12px;
+            font-family: var(--font);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .logout-btn:hover { color: var(--text); border-color: var(--muted); }
+
+        /* ---- Page content ---- */
+        .page {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .page-header p { font-size: 14px; color: var(--muted); }
+
+        /* ---- States ---- */
+        .state-box {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .state-box .icon { font-size: 40px; margin-bottom: 14px; }
+        .state-box p { font-size: 14px; margin-bottom: 6px; }
+        .state-box small { font-size: 12px; color: #374151; }
+
+        .error-state { color: #f87171; }
+
+        /* ---- Server grid ---- */
+        .server-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+        }
+
+        .server-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .server-card:hover {
+            border-color: var(--purple);
+            background: var(--card-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 1px var(--purple), 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .server-card::after {
+            content: '→';
+            position: absolute;
+            right: 18px;
+            font-size: 14px;
+            color: var(--muted);
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: all 0.2s;
+        }
+        .server-card:hover::after { opacity: 1; transform: translateX(0); }
+
+        .server-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            background: var(--purple);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 20px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .server-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; }
+
+        .server-info { flex: 1; min-width: 0; }
+
+        .server-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+        }
+
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-dot.bot-active { background: var(--green); }
+        .status-dot.bot-missing { background: var(--red); }
+
+        .status-text.bot-active { color: var(--green); }
+        .status-text.bot-missing { color: var(--muted); }
+
+        /* Invite badge for missing bot */
+        .invite-badge {
+            padding: 4px 10px;
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--green);
+            text-decoration: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .invite-badge:hover { background: rgba(16,185,129,0.25); }
+
+        /* Spinner */
+        .spinner {
+            width: 28px; height: 28px;
+            border: 3px solid var(--border);
+            border-top-color: var(--purple);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Refresh button */
+        .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 16px;
+            padding: 8px 18px;
+            background: var(--purple);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: var(--font);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .refresh-btn:hover { background: #6d28d9; }
+    </style>
 </head>
 <body>
-    <div class="servers-page">
-        <div class="user-bar">
-            <% if (user.avatar) { %>
-                <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=64" alt="">
-            <% } %>
+    <nav class="topnav">
+        <div class="logo">Set<span>cord</span></div>
+        <div class="user-pill">
+            <div class="user-avatar">
+                <% if (user.avatar) { %>
+                    <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=64" alt="">
+                <% } else { %>
+                    <%= (user.globalName || user.username).charAt(0).toUpperCase() %>
+                <% } %>
+            </div>
             <span><%= user.globalName || user.username %></span>
-            <a href="/auth/logout" class="btn btn-ghost btn-sm" style="margin-left: 10px;">Logout</a>
+            <a href="/auth/logout" class="logout-btn">Logout</a>
         </div>
+    </nav>
 
+    <div class="page">
         <div class="page-header">
             <h1>Select a Server</h1>
             <p>Choose a server to manage with Setcord</p>
         </div>
 
-        <div class="server-grid" id="server-grid">
-            <div class="loading-spinner">Loading your servers...</div>
+        <!-- Loading state -->
+        <div id="state-loading" class="state-box">
+            <div class="spinner"></div>
+            <p>Loading your servers…</p>
         </div>
+
+        <!-- Error state -->
+        <div id="state-error" class="state-box error-state" style="display:none;">
+            <div class="icon">⚠️</div>
+            <p id="error-msg">Failed to load servers. Please refresh.</p>
+            <small id="error-detail"></small>
+            <br>
+            <button class="refresh-btn" onclick="loadServers()">↺ Try Again</button>
+        </div>
+
+        <!-- Empty state -->
+        <div id="state-empty" class="state-box" style="display:none;">
+            <div class="icon">🔍</div>
+            <p>No servers found where you have Administrator permission.</p>
+            <small>Make sure you are an admin on the server you want to manage.</small>
+        </div>
+
+        <!-- Server grid -->
+        <div id="server-grid" class="server-grid" style="display:none;"></div>
     </div>
 
     <script>
-        const CLIENT_ID = '<%= clientId %>';
+        var CLIENT_ID = '<%= clientId %>';
 
-        async function loadServers() {
-            const grid = document.getElementById('server-grid');
+        function getInviteUrl(guildId) {
+            return 'https://discord.com/api/oauth2/authorize' +
+                '?client_id=' + CLIENT_ID +
+                '&permissions=8' +
+                '&scope=bot' +
+                (guildId ? '&guild_id=' + guildId : '');
+        }
 
-            try {
-                const res = await fetch('/api/servers');
-                
-                // If we got redirected to login page because session died
-                if (res.redirected && res.url.includes('/login')) {
-                    window.location.href = '/login';
-                    return;
-                }
+        function esc(t) {
+            var d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
 
-                const contentType = res.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    throw new Error("Server returned a non-JSON response (status: " + res.status + ")");
-                }
+        function getIconUrl(server) {
+            if (server.icon) {
+                return 'https://cdn.discordapp.com/icons/' + server.id + '/' + server.icon + '.png?size=64';
+            }
+            return null;
+        }
 
-                const data = await res.json();
-
-                if (!data.success) {
-                    grid.innerHTML = '<div class="empty-state"><p>Failed to load servers: ' + escapeHtml(data.error || 'Unknown error') + '</p></div>';
-                    return;
-                }
-
-                if (data.servers.length === 0) {
-                    grid.innerHTML = '<div class="empty-state"><p>No servers found where you have Admin permission.</p></div>';
-                    return;
-                }
-
-                grid.innerHTML = '';
-
-                data.servers.forEach((server) => {
-                    const iconHtml = server.icon
-                        ? `<img src="https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png?size=128" alt="">`
-                        : escapeHtml(server.name.charAt(0).toUpperCase());
-
-                    if (server.botPresent) {
-                        const card = document.createElement('a');
-                        card.href = `/dashboard/${server.id}/channels`;
-                        card.className = 'server-card';
-                        card.innerHTML = `
-                            <div class="server-icon">${iconHtml}</div>
-                            <div class="server-card-info">
-                                <h3>${escapeHtml(server.name)}</h3>
-                                <div class="status">
-                                    <span class="status-dot active"></span>
-                                    Bot Active
-                                </div>
-                            </div>
-                        `;
-                        grid.appendChild(card);
-                    } else {
-                        const card = document.createElement('a');
-                        card.href = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&scope=bot&permissions=8&guild_id=${server.id}`;
-                        card.target = '_blank';
-                        card.className = 'server-card';
-                        card.innerHTML = `
-                            <div class="server-icon">${iconHtml}</div>
-                            <div class="server-card-info">
-                                <h3>${escapeHtml(server.name)}</h3>
-                                <div class="status">
-                                    <span class="status-dot inactive"></span>
-                                    No Bot
-                                </div>
-                            </div>
-                            <span class="invite-badge">Invite Bot</span>
-                        `;
-                        grid.appendChild(card);
-                    }
-                });
-            } catch (err) {
-                grid.innerHTML = `<div class="empty-state"><p>Failed to load servers. Please refresh.</p><p style="color:var(--accent-red);font-size:12px;margin-top:10px;">Error: ${escapeHtml(err.message)}</p></div>`;
-                console.error('Fetch error:', err);
+        function setState(which) {
+            ['loading','error','empty','grid'].forEach(function(s) {
+                var el = document.getElementById('state-' + s) || document.getElementById('server-' + s);
+                if (el) el.style.display = 'none';
+            });
+            var target = document.getElementById('state-' + which) || document.getElementById('server-' + which);
+            if (target) target.style.display = 'block';
+            if (which === 'grid') {
+                target.style.display = 'grid';
             }
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        function loadServers() {
+            setState('loading');
+
+            fetch('/api/servers')
+                .then(function(r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.json();
+                })
+                .then(function(data) {
+                    if (!data.success) {
+                        setState('error');
+                        document.getElementById('error-msg').textContent = data.error || 'Failed to load servers.';
+                        return;
+                    }
+
+                    var servers = data.servers;
+
+                    if (!servers || servers.length === 0) {
+                        setState('empty');
+                        return;
+                    }
+
+                    var grid = document.getElementById('server-grid');
+                    grid.innerHTML = '';
+
+                    servers.forEach(function(server) {
+                        var card = document.createElement('div');
+                        card.className = 'server-card';
+
+                        var iconHtml = '';
+                        var iconUrl = getIconUrl(server);
+                        if (iconUrl) {
+                            iconHtml = '<img src="' + iconUrl + '" alt="" onerror="this.style.display=\'none\';this.parentElement.textContent=\'' + esc(server.name.charAt(0).toUpperCase()) + '\'">';
+                        } else {
+                            iconHtml = esc(server.name.charAt(0).toUpperCase());
+                        }
+
+                        var statusClass = server.botPresent ? 'bot-active' : 'bot-missing';
+                        var statusText = server.botPresent ? 'Bot connected' : 'Bot not in server';
+
+                        var rightAction = server.botPresent
+                            ? ''
+                            : '<a class="invite-badge" href="' + getInviteUrl(server.id) + '" target="_blank" onclick="event.stopPropagation()">+ Invite Bot</a>';
+
+                        card.innerHTML =
+                            '<div class="server-icon">' + iconHtml + '</div>' +
+                            '<div class="server-info">' +
+                            '<div class="server-name">' + esc(server.name) + '</div>' +
+                            '<div class="server-status">' +
+                            '<span class="status-dot ' + statusClass + '"></span>' +
+                            '<span class="status-text ' + statusClass + '">' + statusText + '</span>' +
+                            '</div>' +
+                            '</div>' +
+                            rightAction;
+
+                        if (server.botPresent) {
+                            card.addEventListener('click', function() {
+                                window.location.href = '/dashboard/' + server.id + '/channels';
+                            });
+                        }
+
+                        grid.appendChild(card);
+                    });
+
+                    setState('grid');
+                })
+                .catch(function(err) {
+                    setState('error');
+                    document.getElementById('error-msg').textContent = 'Failed to load servers. Please refresh.';
+                    document.getElementById('error-detail').textContent = 'Error: ' + err.message;
+                    console.error('Server load error:', err);
+                });
         }
 
+        // Load on page ready
         loadServers();
     </script>
 </body>
