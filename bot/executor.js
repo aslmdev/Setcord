@@ -44,7 +44,6 @@ function getBotHighestRolePosition(guild) {
 
 function canBotManageRole(guild, role) {
     const botHighest = getBotHighestRolePosition(guild);
-    // Bot can only manage roles strictly below its highest role
     return role.position < botHighest;
 }
 
@@ -175,6 +174,18 @@ async function createCategory(guildId, categoryName) {
     }
 }
 
+// positions: [{ channel: channelId, position: number }, ...]
+async function reorderChannels(guildId, positions) {
+    try {
+        const guild = await getGuild(guildId);
+        await guild.channels.setPositions(positions);
+        return { success: true };
+    } catch (err) {
+        console.error('[BOT] Error reordering channels:', err.message);
+        return { success: false, error: err.message };
+    }
+}
+
 // ========================
 // ROLE OPERATIONS
 // ========================
@@ -182,14 +193,12 @@ async function createCategory(guildId, categoryName) {
 async function fetchRoles(guildId) {
     try {
         const guild = await getGuild(guildId);
-        // Fetch fresh members cache for bot so we can get its highest role
         await guild.members.fetch(client.user.id).catch(() => null);
 
         const roles = await guild.roles.fetch();
         const botHighestPosition = getBotHighestRolePosition(guild);
 
         const roleList = roles
-            // Exclude only @everyone (the guild ID role)
             .filter((r) => r.id !== guild.id)
             .sort((a, b) => b.position - a.position)
             .map((r) => ({
@@ -197,7 +206,7 @@ async function fetchRoles(guildId) {
                 name: r.name,
                 color: r.hexColor,
                 position: r.position,
-                managed: r.managed,          // true = bot/integration role
+                managed: r.managed,
                 isAboveBot: r.position >= botHighestPosition,
                 canManage: r.position < botHighestPosition,
                 memberCount: r.members?.size ?? 0,
@@ -274,6 +283,18 @@ async function editRole(guildId, roleId, updates) {
     }
 }
 
+// positions: [{ role: roleId, position: number }, ...]
+async function reorderRoles(guildId, positions) {
+    try {
+        const guild = await getGuild(guildId);
+        await guild.roles.setPositions(positions);
+        return { success: true };
+    } catch (err) {
+        console.error('[BOT] Error reordering roles:', err.message);
+        return { success: false, error: err.message };
+    }
+}
+
 function isBotInGuild(guildId) {
     if (!isReady) return false;
     return client.guilds.cache.has(guildId);
@@ -307,8 +328,10 @@ module.exports = {
     renameChannel,
     moveChannelToCategory,
     createCategory,
+    reorderChannels,
     fetchRoles,
     createRole,
     deleteRole,
     editRole,
+    reorderRoles,
 };
