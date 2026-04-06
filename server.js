@@ -12,6 +12,14 @@ const authRoutes = require('./backend/routes/auth');
 const apiRoutes = require('./backend/routes/api');
 const setupRoutes = require('./backend/routes/setup');
 
+process.on('uncaughtException', function (err) {
+    console.error('\x1b[31m[CRASH] Uncaught Exception:\x1b[0m', err);
+});
+
+process.on('unhandledRejection', function (reason, promise) {
+    console.error('\x1b[31m[CRASH] Unhandled Rejection:\x1b[0m', reason);
+});
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -31,7 +39,7 @@ app.use(session({
         path: sessionsDir,
         ttl: 30 * 24 * 60 * 60,   // 30 days in seconds
         reapInterval: 60 * 60,      // clean up expired sessions every hour
-        logFn: function() {},        // suppress noisy file-store logs
+        logFn: function () { },        // suppress noisy file-store logs
     }),
     secret: process.env.SESSION_SECRET || 'setcord-dev-secret-change-me',
     resave: false,
@@ -44,6 +52,17 @@ app.use(session({
         maxAge: 30 * 24 * 60 * 60 * 1000,  // 30 days in ms
     },
 }));
+
+// ---- Request logger (so terminal isn't empty) ----
+app.use(function (req, res, next) {
+    var start = Date.now();
+    res.on('finish', function () {
+        var ms = Date.now() - start;
+        var color = res.statusCode >= 400 ? '\x1b[31m' : '\x1b[32m';
+        console.log(color + '[HTTP] ' + req.method + ' ' + req.url + ' → ' + res.statusCode + ' (' + ms + 'ms)\x1b[0m');
+    });
+    next();
+});
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'frontend', 'pages'));
@@ -71,19 +90,29 @@ app.get('/dashboard/:guildId', requireAuth, (req, res) => {
 });
 
 app.get('/dashboard/:guildId/channels', requireAuth, async (req, res) => {
-    const guildId = req.params.guildId;
-    if (!isBotInGuild(guildId)) return res.redirect('/servers');
-    const result = await getGuildInfo(guildId);
-    if (!result.success) return res.redirect('/servers');
-    res.render('channels', { user: req.session.user, guild: result.guild });
+    try {
+        const guildId = req.params.guildId;
+        if (!isBotInGuild(guildId)) return res.redirect('/servers');
+        const result = await getGuildInfo(guildId);
+        if (!result.success) return res.redirect('/servers');
+        res.render('channels', { user: req.session.user, guild: result.guild });
+    } catch (err) {
+        console.error('[ROUTE ERROR] /channels:', err);
+        res.status(500).send('Something went wrong: ' + err.message);
+    }
 });
 
 app.get('/dashboard/:guildId/roles', requireAuth, async (req, res) => {
-    const guildId = req.params.guildId;
-    if (!isBotInGuild(guildId)) return res.redirect('/servers');
-    const result = await getGuildInfo(guildId);
-    if (!result.success) return res.redirect('/servers');
-    res.render('roles', { user: req.session.user, guild: result.guild });
+    try {
+        const guildId = req.params.guildId;
+        if (!isBotInGuild(guildId)) return res.redirect('/servers');
+        const result = await getGuildInfo(guildId);
+        if (!result.success) return res.redirect('/servers');
+        res.render('roles', { user: req.session.user, guild: result.guild });
+    } catch (err) {
+        console.error('[ROUTE ERROR] /roles:', err);
+        res.status(500).send('Something went wrong: ' + err.message);
+    }
 });
 
 app.get('/dashboard/:guildId/setup', requireAuth, async (req, res) => {

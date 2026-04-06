@@ -486,15 +486,22 @@ DragDropList.prototype._bind = function() {
 
 var _loadingEl = null;
 var _loadingCount = 0;
+var _loadingHideTimer = null;
 
 function showLoading(message) {
     _loadingCount++;
     message = message || 'Bot is working\u2026';
 
+    // Cancel any in-progress fade-out so we don't show a ghost overlay
+    if (_loadingHideTimer) {
+        clearTimeout(_loadingHideTimer);
+        _loadingHideTimer = null;
+    }
+
     if (!_loadingEl) {
         _loadingEl = document.createElement('div');
         _loadingEl.id = 'bot-loading-overlay';
-        _loadingEl.style.cssText = 'position:fixed;inset:0;background:rgba(5,5,20,0.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:9000;display:flex;align-items:center;justify-content:center;';
+        _loadingEl.style.cssText = 'position:fixed;inset:0;background:rgba(5,5,20,0.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:9000;display:flex;align-items:center;justify-content:center;opacity:1;transition:none;';
         _loadingEl.innerHTML =
             '<div style="background:#13132a;border:1px solid #1c1c3a;border-radius:16px;padding:32px 40px;text-align:center;min-width:260px;box-shadow:0 24px 60px rgba(0,0,0,0.7);position:relative;overflow:hidden;">' +
             '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#7c3aed,transparent);"></div>' +
@@ -510,9 +517,11 @@ function showLoading(message) {
             style.textContent = '@keyframes setcordSpin{to{transform:rotate(360deg)}}';
             document.head.appendChild(style);
         }
-
         document.body.appendChild(_loadingEl);
     } else {
+        // Overlay exists but was fading — restore it
+        _loadingEl.style.opacity = '1';
+        _loadingEl.style.transition = 'none';
         var msgEl = document.getElementById('bot-loading-msg');
         if (msgEl) msgEl.textContent = message;
     }
@@ -521,17 +530,29 @@ function showLoading(message) {
 function hideLoading() {
     _loadingCount = Math.max(0, _loadingCount - 1);
     if (_loadingCount === 0 && _loadingEl) {
-        _loadingEl.style.opacity = '0';
-        _loadingEl.style.transition = 'opacity 0.15s ease';
-        setTimeout(function() { if (_loadingEl) { _loadingEl.remove(); _loadingEl = null; } }, 160);
+        var elToRemove = _loadingEl;
+        _loadingEl = null;
+        // Disable pointer events IMMEDIATELY so clicks go through right away
+        elToRemove.style.pointerEvents = 'none';
+        elToRemove.style.opacity = '0';
+        elToRemove.style.transition = 'opacity 0.15s ease';
+        _loadingHideTimer = setTimeout(function() {
+            _loadingHideTimer = null;
+            if (elToRemove && elToRemove.parentNode) elToRemove.remove();
+        }, 160);
     }
 }
 
 function apiFetch(url, options, loadingMsg) {
     showLoading(loadingMsg || 'Bot is working\u2026');
-    return fetch(url, options)
+    var fetchOptions = Object.assign({ credentials: 'same-origin' }, options || {});
+    return fetch(url, fetchOptions)
         .then(function(r) { hideLoading(); return r; })
-        .catch(function(err) { hideLoading(); throw err; });
+        .catch(function(err) {
+            hideLoading();
+            console.error('[apiFetch] Network error for', url, err);
+            throw err;
+        });
 }
 
 // ========================
