@@ -83,7 +83,9 @@ async function fetchChannels(guildId) {
                 id: ch.id,
                 name: ch.name,
                 type: ch.type === ChannelType.GuildVoice ? 'voice' :
-                      ch.type === ChannelType.GuildStageVoice ? 'stage' : 'text',
+      ch.type === ChannelType.GuildStageVoice ? 'stage' :
+      ch.type === ChannelType.GuildAnnouncement ? 'announcement' :
+      ch.type === ChannelType.GuildForum ? 'forum' : 'text',
                 position: ch.position,
                 parentId: ch.parentId,
             };
@@ -108,7 +110,15 @@ async function fetchChannels(guildId) {
 async function createChannel(guildId, channelName, channelType = 'text', parentId = null) {
     try {
         const guild = await getGuild(guildId);
-        const type = channelType === 'voice' ? ChannelType.GuildVoice : ChannelType.GuildText;
+        // In createChannel — replace the single type line with this switch:
+let type;
+switch (channelType) {
+    case 'voice':        type = ChannelType.GuildVoice; break;
+    case 'announcement': type = ChannelType.GuildAnnouncement; break;
+    case 'forum':        type = ChannelType.GuildForum; break;
+    case 'stage':        type = ChannelType.GuildStageVoice; break;
+    default:             type = ChannelType.GuildText;
+}
         const options = { name: channelName, type, reason: 'Created by Setcord' };
         if (parentId) options.parent = parentId;
         const channel = await guild.channels.create(options);

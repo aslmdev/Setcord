@@ -86,7 +86,8 @@ router.post('/:guildId/channels', requireGuildAdmin, async (req, res) => {
         if (cleanName.length < 1 || cleanName.length > 100)
             return res.status(400).json({ success: false, error: 'Channel name must be 1-100 characters' });
 
-        const channelType = type === 'voice' ? 'voice' : 'text';
+        const VALID_TYPES = ['text', 'voice', 'announcement', 'forum', 'stage'];
+const channelType = VALID_TYPES.includes(type) ? type : 'text';
         const result = await bot.createChannel(req.guildId, cleanName, channelType, parentId || null);
 
         if (result.success) {

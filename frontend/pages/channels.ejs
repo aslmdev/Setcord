@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,810 +12,976 @@
         /* ---- Sortable ghost/drag styles ---- */
         .sortable-ghost {
             opacity: 0.35;
-            background: rgba(124,58,237,0.15) !important;
+            background: rgba(124, 58, 237, 0.15) !important;
             border: 2px dashed var(--accent-purple) !important;
             border-radius: var(--radius);
         }
-        .sortable-chosen { cursor: grabbing !important; }
+
+        .sortable-chosen {
+            cursor: grabbing !important;
+        }
+
         .sortable-drag {
             background: var(--bg-card-hover);
             border: 2px solid var(--accent-purple);
             border-radius: var(--radius);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
             opacity: 1 !important;
         }
+
         /* ---- Category drag ---- */
         .category-ghost {
             opacity: 0.3;
             border: 2px dashed var(--accent-purple) !important;
             border-radius: var(--radius-lg);
-            background: rgba(124,58,237,0.08) !important;
+            background: rgba(124, 58, 237, 0.08) !important;
         }
+
         /* ---- Bulk select ---- */
         .channel-item.selected-bulk {
-            background: rgba(124,58,237,0.15);
-            border-color: rgba(124,58,237,0.5);
+            background: rgba(124, 58, 237, 0.15);
+            border-color: rgba(124, 58, 237, 0.5);
         }
+
         .bulk-checkbox {
-            width: 15px; height: 15px;
+            width: 15px;
+            height: 15px;
             flex-shrink: 0;
             cursor: pointer;
             accent-color: var(--accent-purple);
             display: none;
             margin-right: 2px;
         }
-        body.bulk-mode .bulk-checkbox { display: block; }
-        body.bulk-mode .drag-handle { display: none; }
+
+        body.bulk-mode .bulk-checkbox {
+            display: block;
+        }
+
+        body.bulk-mode .drag-handle {
+            display: none;
+        }
+
         /* ---- Bulk action bar ---- */
         #bulk-bar {
             display: none;
             position: fixed;
-            top: 0; left: 240px; right: 0;
-            background: rgba(124,58,237,0.95);
+            top: 0;
+            left: 240px;
+            right: 0;
+            background: rgba(124, 58, 237, 0.95);
             backdrop-filter: blur(8px);
             padding: 10px 28px;
             z-index: 800;
             align-items: center;
             gap: 14px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        body.bulk-mode #bulk-bar { display: flex; }
-        body.bulk-mode .main-content { padding-top: 60px; }
-        .bulk-bar-count { font-size: 13px; font-weight: 700; color: #fff; }
+
+        body.bulk-mode #bulk-bar {
+            display: flex;
+        }
+
+        body.bulk-mode .main-content {
+            padding-top: 60px;
+        }
+
+        .bulk-bar-count {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+
         .bulk-bar-btn {
-            padding: 5px 14px; border-radius: var(--radius);
-            font-size: 12px; font-weight: 600; cursor: pointer;
-            border: none; font-family: var(--font);
+            padding: 5px 14px;
+            border-radius: var(--radius);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-family: var(--font);
         }
-        .bulk-bar-btn.danger { background: var(--accent-red); color: #fff; }
-        .bulk-bar-btn.ghost { background: rgba(255,255,255,0.15); color: #fff; }
-        .bulk-bar-btn:hover { opacity: 0.85; }
+
+        .bulk-bar-btn.danger {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .bulk-bar-btn.ghost {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .bulk-bar-btn:hover {
+            opacity: 0.85;
+        }
+
         /* ---- Queued item indicator ---- */
         .channel-item.tm-queued {
             opacity: 0.65;
-            border: 1px dashed rgba(245,158,11,0.5);
+            border: 1px dashed rgba(245, 158, 11, 0.5);
         }
+
         .tm-queued-badge {
-            font-size: 9px; color: #fbbf24;
-            background: rgba(245,158,11,0.1);
-            border: 1px solid rgba(245,158,11,0.3);
-            border-radius: 4px; padding: 1px 5px;
+            font-size: 9px;
+            color: #fbbf24;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 4px;
+            padding: 1px 5px;
             flex-shrink: 0;
         }
+
         /* ---- Category select-all ---- */
         .cat-select-all-btn {
-            font-size: 10px; color: var(--text-muted);
-            background: none; border: none; cursor: pointer;
-            padding: 2px 6px; border-radius: 4px;
+            font-size: 10px;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
             display: none;
         }
-        body.bulk-mode .cat-select-all-btn { display: inline-flex; }
-        .cat-select-all-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+
+        body.bulk-mode .cat-select-all-btn {
+            display: inline-flex;
+        }
+
+        .cat-select-all-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Category bulk select */
+        .cat-bulk-checkbox {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            cursor: pointer;
+            accent-color: var(--accent-purple);
+            display: none;
+            margin-right: 4px;
+        }
+
+        body.bulk-mode .cat-bulk-checkbox {
+            display: block;
+        }
+
+        .category-section.selected-cat-bulk>.category-header {
+            background: rgba(124, 58, 237, 0.12);
+            border-radius: var(--radius);
+        }
     </style>
 </head>
+
 <body>
-<div class="app-layout" id="app-layout">
-    <%- include('../components/sidebar', { guild, activePage: 'channels' }) %>
+    <div class="app-layout" id="app-layout">
+        <%- include('../components/sidebar', { guild, activePage: 'channels' }) %>
 
-    <!-- Bulk selection top bar -->
-    <div id="bulk-bar">
-        <span class="bulk-bar-count" id="bulk-count-label">0 selected</span>
-        <button class="bulk-bar-btn danger" onclick="bulkDelete()">🗑 Delete Selected</button>
-        <button class="bulk-bar-btn ghost" onclick="bulkMoveModal()">📁 Move to Category</button>
-        <div style="flex:1;"></div>
-        <button class="bulk-bar-btn ghost" onclick="selectAll()">Select All</button>
-        <button class="bulk-bar-btn ghost" onclick="exitBulkMode()">✕ Cancel</button>
+            <!-- Bulk selection top bar -->
+            <div id="bulk-bar">
+                <span class="bulk-bar-count" id="bulk-count-label">0 selected</span>
+                <button class="bulk-bar-btn danger" onclick="bulkDelete()">🗑 Delete Selected</button>
+                <button class="bulk-bar-btn ghost" onclick="bulkMoveModal()">📁 Move Channels to Category</button>
+                <div style="flex:1;"></div>
+                <button class="bulk-bar-btn ghost" onclick="selectAll()">Select All Channels</button>
+                <button class="bulk-bar-btn ghost" onclick="exitBulkMode()">✕ Cancel</button>
+            </div>
+
+            <main class="main-content">
+                <%- include('../components/header', { title: 'Channel Manager' ,
+                    subtitle: 'Drag to reorder · select multiple · or use the form' , guildId: guild.id }) %>
+
+                    <div class="two-col">
+                        <!-- LEFT: Channel Hierarchy -->
+                        <div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Channels <span id="ch-count"
+                                            style="color:var(--text-muted);font-weight:400;font-size:12px;"></span></h3>
+                                    <div style="display:flex;gap:6px;">
+                                        <button class="btn btn-ghost btn-sm" id="bulk-toggle-btn"
+                                            onclick="toggleBulkMode()" title="Select multiple">☑ Select</button>
+                                        <button class="btn btn-success btn-sm" onclick="toggleCategoryForm()">＋
+                                            Category</button>
+                                    </div>
+                                </div>
+
+                                <!-- New Category Form -->
+                                <div class="inline-form" id="category-form" style="display:none;margin-bottom:14px;">
+                                    <div class="form-group" style="margin-bottom:8px;">
+                                        <label>Category Name</label>
+                                        <input type="text" class="form-input" id="category-name"
+                                            placeholder="e.g. 📋 Logs" maxlength="100">
+                                    </div>
+                                    <div class="form-actions">
+                                        <button class="btn btn-ghost btn-sm"
+                                            onclick="toggleCategoryForm()">Cancel</button>
+                                        <button class="btn btn-success btn-sm"
+                                            onclick="createCategory()">Create</button>
+                                    </div>
+                                </div>
+
+                                <!-- Drag hint -->
+                                <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
+                                    ⠿ Drag channels between categories · drag categories to reorder
+                                </p>
+
+                                <!-- Channel list container — categories are sortable, channels within are sortable -->
+                                <div id="categories-container">
+                                    <div class="loading-spinner">Loading channels…</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Create + Rename -->
+                        <div>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Create Channel</h3>
+                                </div>
+                                <div id="create-error" style="display:none;" class="api-error-banner">
+                                    <span>⚠</span><span id="create-error-msg"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label>Channel Name</label>
+                                    <input type="text" class="form-input" id="channel-name"
+                                        placeholder="e.g. 📢 announcements" maxlength="100">
+                                    <div class="field-error" id="channel-name-err" style="display:none;"></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Type</label>
+                                        <select class="form-input" id="channel-type">
+                                            <option value="text">📝 Text</option>
+                                            <option value="voice">🔊 Voice</option>
+                                            <option value="announcement">📢 Announcement</option>
+                                            <option value="forum">💬 Forum</option>
+                                            <option value="stage">🎙️ Stage</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Category</label>
+                                        <select class="form-input" id="channel-category">
+                                            <option value="">No Category</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" style="width:100%;justify-content:center;"
+                                    onclick="createChannel()" id="create-channel-btn">Create Channel</button>
+                            </div>
+
+                            <!-- Rename card -->
+                            <div class="card" id="rename-card" style="display:none;">
+                                <div class="card-header">
+                                    <h3>Rename Channel</h3>
+                                    <button class="btn btn-ghost btn-sm" onclick="cancelRename()">✕</button>
+                                </div>
+                                <div id="rename-error" style="display:none;" class="api-error-banner">
+                                    <span>⚠</span><span id="rename-error-msg"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label>New Name</label>
+                                    <input type="text" class="form-input" id="rename-input"
+                                        placeholder="new-channel-name" maxlength="100">
+                                    <div class="field-error" id="rename-name-err" style="display:none;"></div>
+                                </div>
+                                <div style="display:flex;gap:8px;">
+                                    <button class="btn btn-ghost" onclick="cancelRename()">Cancel</button>
+                                    <button class="btn btn-primary" onclick="submitRename()">Save</button>
+                                </div>
+                                <input type="hidden" id="rename-channel-id">
+                            </div>
+
+                            <!-- Move to category modal -->
+                            <div class="card" id="move-cat-card" style="display:none;">
+                                <div class="card-header">
+                                    <h3>Move to Category</h3>
+                                    <button class="btn btn-ghost btn-sm"
+                                        onclick="document.getElementById('move-cat-card').style.display='none'">✕</button>
+                                </div>
+                                <div class="form-group">
+                                    <label>Target Category</label>
+                                    <select class="form-input" id="move-target-cat">
+                                        <option value="">No Category (root)</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" style="width:100%;justify-content:center;"
+                                    onclick="executeBulkMove()">Move Selected</button>
+                            </div>
+                        </div>
+                    </div>
+            </main>
     </div>
 
-    <main class="main-content">
-        <%- include('../components/header', { title: 'Channel Manager', subtitle: 'Drag to reorder · select multiple · or use the form', guildId: guild.id }) %>
-
-        <div class="two-col">
-            <!-- LEFT: Channel Hierarchy -->
-            <div>
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Channels <span id="ch-count" style="color:var(--text-muted);font-weight:400;font-size:12px;"></span></h3>
-                        <div style="display:flex;gap:6px;">
-                            <button class="btn btn-ghost btn-sm" id="bulk-toggle-btn" onclick="toggleBulkMode()" title="Select multiple">☑ Select</button>
-                            <button class="btn btn-success btn-sm" onclick="toggleCategoryForm()">＋ Category</button>
-                        </div>
-                    </div>
-
-                    <!-- New Category Form -->
-                    <div class="inline-form" id="category-form" style="display:none;margin-bottom:14px;">
-                        <div class="form-group" style="margin-bottom:8px;">
-                            <label>Category Name</label>
-                            <input type="text" class="form-input" id="category-name" placeholder="e.g. 📋 Logs" maxlength="100">
-                        </div>
-                        <div class="form-actions">
-                            <button class="btn btn-ghost btn-sm" onclick="toggleCategoryForm()">Cancel</button>
-                            <button class="btn btn-success btn-sm" onclick="createCategory()">Create</button>
-                        </div>
-                    </div>
-
-                    <!-- Drag hint -->
-                    <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
-                        ⠿ Drag channels between categories · drag categories to reorder
-                    </p>
-
-                    <!-- Channel list container — categories are sortable, channels within are sortable -->
-                    <div id="categories-container">
-                        <div class="loading-spinner">Loading channels…</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- RIGHT: Create + Rename -->
-            <div>
-                <div class="card">
-                    <div class="card-header"><h3>Create Channel</h3></div>
-                    <div id="create-error" style="display:none;" class="api-error-banner">
-                        <span>⚠</span><span id="create-error-msg"></span>
-                    </div>
-                    <div class="form-group">
-                        <label>Channel Name</label>
-                        <input type="text" class="form-input" id="channel-name" placeholder="e.g. 📢 announcements" maxlength="100">
-                        <div class="field-error" id="channel-name-err" style="display:none;"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Type</label>
-                            <select class="form-input" id="channel-type">
-                                <option value="text">📝 Text</option>
-                                <option value="voice">🔊 Voice</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Category</label>
-                            <select class="form-input" id="channel-category">
-                                <option value="">No Category</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" style="width:100%;justify-content:center;"
-                            onclick="createChannel()" id="create-channel-btn">Create Channel</button>
-                </div>
-
-                <!-- Rename card -->
-                <div class="card" id="rename-card" style="display:none;">
-                    <div class="card-header">
-                        <h3>Rename Channel</h3>
-                        <button class="btn btn-ghost btn-sm" onclick="cancelRename()">✕</button>
-                    </div>
-                    <div id="rename-error" style="display:none;" class="api-error-banner">
-                        <span>⚠</span><span id="rename-error-msg"></span>
-                    </div>
-                    <div class="form-group">
-                        <label>New Name</label>
-                        <input type="text" class="form-input" id="rename-input" placeholder="new-channel-name" maxlength="100">
-                        <div class="field-error" id="rename-name-err" style="display:none;"></div>
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                        <button class="btn btn-ghost" onclick="cancelRename()">Cancel</button>
-                        <button class="btn btn-primary" onclick="submitRename()">Save</button>
-                    </div>
-                    <input type="hidden" id="rename-channel-id">
-                </div>
-
-                <!-- Move to category modal -->
-                <div class="card" id="move-cat-card" style="display:none;">
-                    <div class="card-header">
-                        <h3>Move to Category</h3>
-                        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('move-cat-card').style.display='none'">✕</button>
-                    </div>
-                    <div class="form-group">
-                        <label>Target Category</label>
-                        <select class="form-input" id="move-target-cat">
-                            <option value="">No Category (root)</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="executeBulkMove()">Move Selected</button>
-                </div>
-            </div>
+    <!-- Test Mode Bar -->
+    <div id="test-mode-bar">
+        <div class="tm-bar-label">⚡ Pending</div>
+        <div class="tm-queue-list" id="tm-queue-list">
+            <span class="tm-empty">No changes queued.</span>
         </div>
-    </main>
-</div>
-
-<!-- Test Mode Bar -->
-<div id="test-mode-bar">
-    <div class="tm-bar-label">⚡ Pending</div>
-    <div class="tm-queue-list" id="tm-queue-list">
-        <span class="tm-empty">No changes queued.</span>
+        <div class="tm-bar-actions">
+            <button id="tm-discard-btn" onclick="tmDiscard()">Discard All</button>
+            <button id="tm-publish-btn" onclick="tmPublish()">Publish to Discord →</button>
+        </div>
     </div>
-    <div class="tm-bar-actions">
-        <button id="tm-discard-btn" onclick="tmDiscard()">Discard All</button>
-        <button id="tm-publish-btn" onclick="tmPublish()">Publish to Discord →</button>
-    </div>
-</div>
 
-<script src="/js/setcord.js"></script>
-<script>
-// ============================================================
-//  CHANNELS PAGE — Full SortableJS drag/drop + bulk select
-// ============================================================
+    <script src="/js/setcord.js"></script>
+    <script>
+        // ============================================================
+        //  CHANNELS PAGE — Full SortableJS drag/drop + bulk select
+        // ============================================================
 
-var TM = Setcord.TestMode;
-var GUILD_ID = '<%= guild.id %>';
+        var TM = Setcord.TestMode;
+        var GUILD_ID = '<%= guild.id %>';
 
-// State
-var channelData = { categories: [], uncategorized: [] };
-var sortableInstances = []; // keep refs to destroy/reinit
-var categorySortable = null;
-var bulkMode = false;
-var selectedIds = new Set();
+        var channelData = { categories: [], uncategorized: [] };
+        var sortableInstances = [];
+        var categorySortable = null;
+        var bulkMode = false;
+        var selectedIds = new Set();       // channel IDs
+        var selectedCatIds = new Set();    // category IDs
 
-// ---- INIT ----
-document.addEventListener('DOMContentLoaded', function() {
-    Setcord.makeEmojiInput(document.getElementById('channel-name'));
-    Setcord.makeEmojiInput(document.getElementById('rename-input'));
-    Setcord.makeEmojiInput(document.getElementById('category-name'));
-
-    TM.init(GUILD_ID,
-        function(active) {
-            document.getElementById('app-layout').classList.toggle('tm-bar-visible', active);
-            document.getElementById('tm-status-badge') && (document.getElementById('tm-status-badge').style.display = active ? 'block' : 'none');
-        },
-        renderTmQueue
-    );
-    if (TM.isActive()) {
-        document.getElementById('app-layout').classList.add('tm-bar-visible');
-        document.getElementById('tm-status-badge') && (document.getElementById('tm-status-badge').style.display = 'block');
-    }
-    renderTmQueue(TM.getQueue());
-    loadChannels();
-});
-
-// ---- HELPERS ----
-function esc(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-function showFieldError(id, msg) { var el = document.getElementById(id); if (!msg) { el.style.display='none'; } else { el.style.display='flex'; el.textContent='⚠ '+msg; } }
-function showBanner(bId, mId, msg) { var b=document.getElementById(bId), m=document.getElementById(mId); if (!msg) { b.style.display='none'; } else { m.textContent=msg; b.style.display='flex'; } }
-
-// ---- TEST MODE QUEUE ----
-function renderTmQueue(queue) {
-    var list = document.getElementById('tm-queue-list');
-    if (!list) return;
-    if (!queue || queue.length === 0) { list.innerHTML = '<span class="tm-empty">No changes queued.</span>'; return; }
-    list.innerHTML = '';
-    queue.forEach(function(entry) {
-        var item = document.createElement('div');
-        item.className = 'tm-queue-item';
-        item.innerHTML = '<span>' + esc(entry.label) + '</span><button class="tm-queue-remove" onclick="TM.removeFromQueue('+entry.id+');renderTmQueue(TM.getQueue())">✕</button>';
-        list.appendChild(item);
-    });
-}
-
-function tmDiscard() {
-    var q = TM.getQueue();
-    if (!q.length) { Setcord.showToast('Nothing to discard','info'); return; }
-    Setcord.showConfirmModal({ title:'Discard Changes', desc:'Remove all '+q.length+' queued change(s)?', confirmText:'Discard All', onConfirm: function() { TM.clearQueue(); renderTmQueue([]); loadChannels(); Setcord.showToast('Discarded','info'); } });
-}
-
-function tmPublish() {
-    var q = TM.getQueue();
-    if (!q.length) { Setcord.showToast('Nothing to publish','info'); return; }
-    var overlay = document.createElement('div');
-    overlay.className = 'tm-publish-overlay';
-    overlay.innerHTML = '<div class="tm-publish-box" style="position:relative;overflow:hidden;">' +
-        '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#fbbf24,transparent);"></div>' +
-        '<div class="tm-publish-title">⚡ Publishing ' + q.length + ' change(s)</div>' +
-        '<div class="tm-publish-sub">Applying to Discord…</div>' +
-        '<div class="tm-progress-bar-wrap"><div class="tm-progress-bar" id="tm-pbar"></div></div>' +
-        '<div class="tm-publish-log" id="tm-plog"></div>' +
-        '<button class="btn btn-ghost" id="tm-done-btn" style="display:none;width:100%;justify-content:center;" onclick="this.closest(\'.tm-publish-overlay\').remove();loadChannels()">Done ✓</button>' +
-        '</div>';
-    document.body.appendChild(overlay);
-    TM.publish(function(done, total, result) {
-        var bar = document.getElementById('tm-pbar');
-        var log = document.getElementById('tm-plog');
-        if (bar) bar.style.width = Math.round(done/total*100) + '%';
-        if (log && result) {
-            var item = document.createElement('div');
-            item.className = 'tm-log-item ' + (result.success ? 'ok' : 'fail');
-            item.textContent = (result.success ? '✓ ' : '✕ ') + result.entry.label + (result.error ? ' — '+result.error : '');
-            log.appendChild(item); log.scrollTop = log.scrollHeight;
+        // ---- CHANNEL TYPE HELPERS ----
+        function channelIcon(type) {
+            if (type === 'voice') return '🔊';
+            if (type === 'stage') return '🎙️';
+            if (type === 'announcement') return '📢';
+            if (type === 'forum') return '💬';
+            return '#';
         }
-    }).then(function(res) {
-        var btn = document.getElementById('tm-done-btn');
-        if (btn) btn.style.display = 'flex';
-        var ok = res.results.filter(function(r){return r.success;}).length;
-        var fail = res.results.filter(function(r){return !r.success;}).length;
-        Setcord.showToast(fail===0 ? ok+' change(s) published!' : ok+' published, '+fail+' failed', fail===0?'success':'warning');
-    });
-}
 
-// ---- LOAD CHANNELS ----
-function loadChannels() {
-    var container = document.getElementById('categories-container');
-    container.innerHTML = '<div class="loading-spinner">Loading…</div>';
-    destroySortables();
+        // ---- INIT ----
+        document.addEventListener('DOMContentLoaded', function () {
+            Setcord.makeEmojiInput(document.getElementById('channel-name'));
+            Setcord.makeEmojiInput(document.getElementById('rename-input'));
+            Setcord.makeEmojiInput(document.getElementById('category-name'));
 
-    Setcord.apiFetch('/api/' + GUILD_ID + '/channels', {}, 'Loading channels…')
-        .then(function(r){ return r.json(); })
-        .then(function(data) {
-            if (!data.success) { container.innerHTML = '<div class="empty-state"><p>'+esc(Setcord.parseDiscordError(data))+'</p></div>'; return; }
-            channelData = data.data;
-            updateCategoryDropdowns();
-            renderAll();
-        })
-        .catch(function() { container.innerHTML = '<div class="empty-state"><p>Failed to load. Check console.</p></div>'; });
-}
-
-function updateCategoryDropdowns() {
-    var selects = [document.getElementById('channel-category'), document.getElementById('move-target-cat')];
-    selects.forEach(function(sel) {
-        if (!sel) return;
-        sel.innerHTML = '<option value="">No Category</option>';
-        channelData.categories.forEach(function(cat) {
-            sel.innerHTML += '<option value="'+cat.id+'">'+esc(cat.name)+'</option>';
-        });
-    });
-    var countEl = document.getElementById('ch-count');
-    var total = channelData.uncategorized.length + channelData.categories.reduce(function(a,c){return a+c.channels.length;},0);
-    if (countEl) countEl.textContent = '('+total+')';
-}
-
-// ---- RENDER ALL ----
-function renderAll() {
-    var container = document.getElementById('categories-container');
-    container.innerHTML = '';
-    destroySortables();
-
-    // Uncategorized group (always first)
-    var uncatEl = buildCategoryEl(null, 'No Category', channelData.uncategorized, false);
-    container.appendChild(uncatEl);
-    initChannelSortable(uncatEl.querySelector('.channels-body'), null);
-
-    // Categories
-    channelData.categories.forEach(function(cat) {
-        var catEl = buildCategoryEl(cat.id, cat.name, cat.channels, true);
-        container.appendChild(catEl);
-        initChannelSortable(catEl.querySelector('.channels-body'), cat.id);
-    });
-
-    // Make categories themselves sortable (move entire category up/down)
-    initCategorySortable(container);
-}
-
-function buildCategoryEl(catId, catName, channels, isDeletable) {
-    var wrapper = document.createElement('div');
-    wrapper.className = 'category-section';
-    wrapper.dataset.catId = catId || '__none__';
-    if (isDeletable) wrapper.setAttribute('draggable', 'false'); // SortableJS handles it
-
-    wrapper.innerHTML =
-        '<div class="category-header">' +
-        '<span class="category-name" onclick="toggleCollapse(this)">' +
-        '<span class="collapse-arrow" style="display:inline-block;width:12px;">▾</span> ' + esc(catName) +
-        '</span>' +
-        '<div style="display:flex;align-items:center;gap:4px;">' +
-        '<button class="cat-select-all-btn" onclick="selectCategory(\''+esc(catId||'__none__')+'\')" title="Select all in category">☑ All</button>' +
-        (isDeletable ? '<button class="action-btn delete" onclick="deleteCategory(\''+catId+'\',\''+esc(catName)+'\')" title="Delete category">🗑️</button>' : '') +
-        (isDeletable ? '<span class="drag-handle cat-drag-handle" title="Drag category" style="cursor:grab;font-size:14px;padding:0 4px;color:var(--text-muted);">⠿⠿</span>' : '') +
-        '</div>' +
-        '</div>' +
-        '<div class="channels-body" data-cat-id="'+(catId||'__none__')+'"></div>';
-
-    var body = wrapper.querySelector('.channels-body');
-    channels.forEach(function(ch) { body.appendChild(buildChannelEl(ch)); });
-
-    return wrapper;
-}
-
-function buildChannelEl(ch) {
-    var el = document.createElement('div');
-    el.className = 'channel-item';
-    el.dataset.channelId = ch.id;
-    el.dataset.type = ch.type;
-    el.dataset.name = ch.name;
-    var icon = ch.type === 'voice' ? '🔊' : '#';
-
-    el.innerHTML =
-        '<input type="checkbox" class="bulk-checkbox" data-id="'+ch.id+'" onchange="onCheckboxChange(this)">' +
-        '<div class="drag-handle" title="Drag to reorder">⠿</div>' +
-        '<div class="channel-info" onclick="onChannelClick(this,\''+ch.id+'\')" style="cursor:pointer;flex:1;">' +
-        '<span class="channel-icon">'+icon+'</span>' +
-        '<span class="channel-name">'+esc(ch.name)+'</span>' +
-        '</div>' +
-        '<div class="channel-actions">' +
-        '<button class="action-btn" onclick="startRename(\''+ch.id+'\',\''+esc(ch.name).replace(/'/g,"\\'")+'\')" title="Rename">✏️</button>' +
-        '<button class="action-btn delete" onclick="deleteSingle(\''+ch.id+'\',\''+esc(ch.name).replace(/'/g,"\\'")+'\')" title="Delete">🗑️</button>' +
-        '</div>';
-
-    return el;
-}
-
-function onChannelClick(infoEl, channelId) {
-    if (bulkMode) {
-        var cb = infoEl.parentElement.querySelector('.bulk-checkbox');
-        if (cb) { cb.checked = !cb.checked; onCheckboxChange(cb); }
-    }
-}
-
-function toggleCollapse(nameEl) {
-    var section = nameEl.closest('.category-section');
-    var body = section.querySelector('.channels-body');
-    var arrow = nameEl.querySelector('.collapse-arrow');
-    if (!body) return;
-    var hidden = body.style.display === 'none';
-    body.style.display = hidden ? '' : 'none';
-    if (arrow) arrow.textContent = hidden ? '▾' : '▸';
-}
-
-// ---- SORTABLE INIT ----
-function destroySortables() {
-    sortableInstances.forEach(function(s){ try { s.destroy(); } catch(e){} });
-    sortableInstances = [];
-    if (categorySortable) { try { categorySortable.destroy(); } catch(e){} categorySortable = null; }
-}
-
-function initChannelSortable(bodyEl, catId) {
-    if (!bodyEl) return;
-    var s = new Sortable(bodyEl, {
-        group: 'channels',               // SAME group = cross-category drag
-        animation: 150,
-        handle: '.drag-handle',
-        ghostClass: 'sortable-ghost',
-        chosenClass: 'sortable-chosen',
-        dragClass: 'sortable-drag',
-        fallbackOnBody: true,
-        swapThreshold: 0.5,
-        onEnd: function(evt) {
-            var channelId = evt.item.dataset.channelId;
-            var newBodyEl = evt.to;
-            var newCatId = newBodyEl.dataset.catId === '__none__' ? null : newBodyEl.dataset.catId;
-            var oldCatId = evt.from.dataset.catId === '__none__' ? null : evt.from.dataset.catId;
-
-            // Category changed — call move API
-            if (newCatId !== oldCatId) {
-                var label = 'Move #'+evt.item.dataset.name+' → '+(newCatId ? 'category' : 'root');
-                var result = TM.intercept('moveChannel', { channelId: channelId, parentId: newCatId }, label);
-                if (!result.intercepted) {
-                    fetch('/api/'+GUILD_ID+'/channels/'+channelId, {
-                        method:'PATCH', headers:{'Content-Type':'application/json'},
-                        body: JSON.stringify({ parentId: newCatId })
-                    }).then(function(r){return r.json();}).then(function(data){
-                        if (data.success) Setcord.showToast('Channel moved!', 'success');
-                        else { Setcord.showToast(Setcord.parseDiscordError(data),'error'); loadChannels(); }
-                    }).catch(function(){ Setcord.showToast('Move failed','error'); loadChannels(); });
-                }
-            } else {
-                // Same category reorder — show info, Discord doesn't persist position without extra API
-                if (!TM.isActive()) Setcord.showToast('Order updated (visual only — Discord channel ordering requires bot permissions)', 'info', 5000);
-                else Setcord.showToast('Reorder queued', 'warning', 2000);
-            }
-        }
-    });
-    sortableInstances.push(s);
-}
-
-function initCategorySortable(container) {
-    categorySortable = new Sortable(container, {
-        animation: 200,
-        handle: '.cat-drag-handle',
-        ghostClass: 'category-ghost',
-        chosenClass: 'sortable-chosen',
-        dragClass: 'sortable-drag',
-        filter: '.channel-item',          // don't treat channels as categories
-        onEnd: function(evt) {
-            Setcord.showToast('Category order updated (visual)', 'info', 3000);
-        }
-    });
-}
-
-// ---- BULK MODE ----
-function toggleBulkMode() {
-    if (bulkMode) exitBulkMode();
-    else {
-        bulkMode = true;
-        document.body.classList.add('bulk-mode');
-        selectedIds.clear();
-        updateBulkBar();
-        Setcord.showToast('Select channels, then use the top bar', 'info', 3000);
-    }
-}
-
-function exitBulkMode() {
-    bulkMode = false;
-    document.body.classList.remove('bulk-mode');
-    selectedIds.clear();
-    document.querySelectorAll('.channel-item').forEach(function(el) {
-        el.classList.remove('selected-bulk');
-        var cb = el.querySelector('.bulk-checkbox');
-        if (cb) cb.checked = false;
-    });
-    document.getElementById('move-cat-card').style.display = 'none';
-    updateBulkBar();
-}
-
-function onCheckboxChange(cb) {
-    var id = cb.dataset.id;
-    var item = cb.closest('.channel-item');
-    if (cb.checked) { selectedIds.add(id); item.classList.add('selected-bulk'); }
-    else { selectedIds.delete(id); item.classList.remove('selected-bulk'); }
-    updateBulkBar();
-}
-
-function selectAll() {
-    document.querySelectorAll('.bulk-checkbox').forEach(function(cb) {
-        cb.checked = true;
-        selectedIds.add(cb.dataset.id);
-        cb.closest('.channel-item').classList.add('selected-bulk');
-    });
-    updateBulkBar();
-}
-
-function selectCategory(catId) {
-    var body = document.querySelector('.channels-body[data-cat-id="'+catId+'"]');
-    if (!body) return;
-    body.querySelectorAll('.bulk-checkbox').forEach(function(cb) {
-        cb.checked = true;
-        selectedIds.add(cb.dataset.id);
-        cb.closest('.channel-item').classList.add('selected-bulk');
-    });
-    updateBulkBar();
-}
-
-function updateBulkBar() {
-    var label = document.getElementById('bulk-count-label');
-    if (label) label.textContent = selectedIds.size + ' selected';
-}
-
-function bulkDelete() {
-    if (!selectedIds.size) { Setcord.showToast('Select channels first','warning'); return; }
-    var ids = Array.from(selectedIds);
-    Setcord.showConfirmModal({
-        title: 'Delete ' + ids.length + ' Channel(s)',
-        desc: 'Permanently delete all selected channels.',
-        confirmText: 'Delete All',
-        onConfirm: function() {
+            TM.init(GUILD_ID,
+                function (active) {
+                    document.getElementById('app-layout').classList.toggle('tm-bar-visible', active);
+                    var b = document.getElementById('tm-status-badge');
+                    if (b) b.style.display = active ? 'block' : 'none';
+                },
+                renderTmQueue
+            );
             if (TM.isActive()) {
-                ids.forEach(function(id) {
-                    var el = document.querySelector('.channel-item[data-channel-id="'+id+'"]');
-                    var name = el ? el.dataset.name : id;
-                    TM.intercept('deleteChannel', { channelId: id }, 'Delete #'+name);
-                });
-                exitBulkMode();
-                loadChannels();
-                return;
+                document.getElementById('app-layout').classList.add('tm-bar-visible');
+                var b = document.getElementById('tm-status-badge');
+                if (b) b.style.display = 'block';
             }
-            Setcord.apiFetch('/api/'+GUILD_ID+'/channels/bulk-delete', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ channelIds: ids })
-            }).then(function(r){return r.json();}).then(function(data){
-                Setcord.showToast(data.deleted.length+' deleted'+(data.failed.length?' · '+data.failed.length+' failed':''), data.failed.length?'warning':'success');
-                exitBulkMode();
-                loadChannels();
-            }).catch(function(){ Setcord.showToast('Bulk delete failed','error'); });
-        }
-    });
-}
-
-function bulkMoveModal() {
-    if (!selectedIds.size) { Setcord.showToast('Select channels first','warning'); return; }
-    document.getElementById('move-cat-card').style.display = 'block';
-}
-
-function executeBulkMove() {
-    var targetCatId = document.getElementById('move-target-cat').value || null;
-    var ids = Array.from(selectedIds);
-    if (!ids.length) return;
-    document.getElementById('move-cat-card').style.display = 'none';
-
-    var chain = Promise.resolve();
-    var succeeded = 0, failed = 0;
-
-    ids.forEach(function(id) {
-        var el = document.querySelector('.channel-item[data-channel-id="'+id+'"]');
-        var name = el ? el.dataset.name : id;
-        var label = 'Move #'+name;
-
-        if (TM.isActive()) {
-            TM.intercept('moveChannel', { channelId: id, parentId: targetCatId }, label);
-            succeeded++;
-            return;
-        }
-
-        chain = chain.then(function() {
-            return fetch('/api/'+GUILD_ID+'/channels/'+id, {
-                method:'PATCH', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ parentId: targetCatId })
-            }).then(function(r){return r.json();}).then(function(data){
-                if (data.success) succeeded++;
-                else failed++;
-            }).catch(function(){ failed++; });
-        });
-    });
-
-    chain.then(function() {
-        Setcord.showToast(succeeded+' channel(s) moved'+(failed?' · '+failed+' failed':''), failed?'warning':'success');
-        exitBulkMode();
-        loadChannels();
-    });
-}
-
-// ---- CREATE CHANNEL ----
-function createChannel() {
-    var nameInput = document.getElementById('channel-name');
-    var name = nameInput.value.trim();
-    var type = document.getElementById('channel-type').value;
-    var parentId = document.getElementById('channel-category').value || null;
-
-    showFieldError('channel-name-err', null);
-    showBanner('create-error','create-error-msg', null);
-
-    var err = Setcord.validateChannelName(name);
-    if (err) { showFieldError('channel-name-err', err); nameInput.classList.add('error-state'); return; }
-    nameInput.classList.remove('error-state');
-
-    var payload = { name: name, type: type, parentId: parentId || undefined };
-    var label = 'Create #'+name;
-
-    var result = TM.intercept('createChannel', payload, label);
-    if (result.intercepted) {
-        nameInput.value = '';
-        // Optimistically add to UI
-        var catId = parentId || '__none__';
-        var body = document.querySelector('.channels-body[data-cat-id="'+catId+'"]');
-        if (body) {
-            var fakeCh = { id: 'tm_'+Date.now(), name: name, type: type };
-            var el = buildChannelEl(fakeCh);
-            el.classList.add('tm-queued');
-            el.querySelector('.channel-actions').innerHTML = '<span class="tm-queued-badge">queued</span>';
-            body.appendChild(el);
-        } else {
-            // Category doesn't exist yet in UI — reload will happen on publish
-            Setcord.showToast('Queued. Will appear after publish.', 'warning');
-        }
-        return;
-    }
-
-    var btn = document.getElementById('create-channel-btn');
-    btn.disabled = true; btn.textContent = 'Creating…';
-
-    Setcord.apiFetch('/api/'+GUILD_ID+'/channels', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-    }).then(function(r){return r.json();}).then(function(data){
-        if (data.success) { Setcord.showToast('Channel #'+data.channel.name+' created!','success'); nameInput.value=''; loadChannels(); }
-        else showBanner('create-error','create-error-msg', Setcord.parseDiscordError(data));
-    }).catch(function(){ showBanner('create-error','create-error-msg','Network error.'); })
-      .finally(function(){ btn.disabled=false; btn.textContent='Create Channel'; });
-}
-
-// ---- CREATE CATEGORY ----
-function toggleCategoryForm() {
-    var f = document.getElementById('category-form');
-    f.style.display = f.style.display==='none' ? 'block' : 'none';
-}
-
-function createCategory() {
-    var input = document.getElementById('category-name');
-    var name = input.value.trim();
-    if (!name) { Setcord.showToast('Enter a category name','warning'); return; }
-
-    var result = TM.intercept('createCategory', { name: name }, 'Create category: '+name);
-    if (result.intercepted) {
-        input.value = '';
-        toggleCategoryForm();
-        // Optimistically add category to UI
-        var container = document.getElementById('categories-container');
-        var fakeCat = { id: null, name: name, channels: [] };
-        var fakeId = 'tm_cat_'+Date.now();
-        var catEl = buildCategoryEl(fakeId, name+'  [queued]', [], false);
-        catEl.style.opacity = '0.6';
-        catEl.dataset.catId = fakeId;
-        container.appendChild(catEl);
-        initChannelSortable(catEl.querySelector('.channels-body'), fakeId);
-        // Also add to category dropdowns
-        var option = '<option value="'+fakeId+'">[queued] '+esc(name)+'</option>';
-        document.getElementById('channel-category').innerHTML += option;
-        document.getElementById('move-target-cat').innerHTML += option;
-        return;
-    }
-
-    Setcord.apiFetch('/api/'+GUILD_ID+'/categories', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ name: name })
-    }).then(function(r){return r.json();}).then(function(data){
-        if (data.success) {
-            Setcord.showToast('Category "'+data.category.name+'" created!','success');
-            input.value = '';
-            toggleCategoryForm();
+            renderTmQueue(TM.getQueue());
             loadChannels();
-        } else {
-            Setcord.showToast(Setcord.parseDiscordError(data),'error');
-        }
-    }).catch(function(){ Setcord.showToast('Network error','error'); });
-}
+        });
 
-// ---- DELETE ----
-function deleteSingle(channelId, name) {
-    Setcord.showConfirmModal({
-        title: 'Delete Channel', desc: 'Permanently delete', targetName: '#'+name, confirmText: 'Delete',
-        onConfirm: function() {
-            var result = TM.intercept('deleteChannel', { channelId: channelId }, 'Delete #'+name);
+        // ---- HELPERS ----
+        function esc(t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+        function showFieldError(id, msg) { var el = document.getElementById(id); if (!msg) { el.style.display = 'none'; } else { el.style.display = 'flex'; el.textContent = '⚠ ' + msg; } }
+        function showBanner(bId, mId, msg) { var b = document.getElementById(bId), m = document.getElementById(mId); if (!msg) { b.style.display = 'none'; } else { m.textContent = msg; b.style.display = 'flex'; } }
+
+        // ---- TEST MODE QUEUE ----
+        function renderTmQueue(queue) {
+            var list = document.getElementById('tm-queue-list');
+            if (!list) return;
+            if (!queue || queue.length === 0) { list.innerHTML = '<span class="tm-empty">No changes queued.</span>'; return; }
+            list.innerHTML = '';
+            queue.forEach(function (entry) {
+                var item = document.createElement('div');
+                item.className = 'tm-queue-item';
+                item.innerHTML = '<span>' + esc(entry.label) + '</span><button class="tm-queue-remove" onclick="TM.removeFromQueue(' + entry.id + ');renderTmQueue(TM.getQueue())">✕</button>';
+                list.appendChild(item);
+            });
+        }
+
+        function tmDiscard() {
+            var q = TM.getQueue();
+            if (!q.length) { Setcord.showToast('Nothing to discard', 'info'); return; }
+            Setcord.showConfirmModal({ title: 'Discard Changes', desc: 'Remove all ' + q.length + ' queued change(s)?', confirmText: 'Discard All', onConfirm: function () { TM.clearQueue(); renderTmQueue([]); loadChannels(); Setcord.showToast('Discarded', 'info'); } });
+        }
+
+        function tmPublish() {
+            var q = TM.getQueue();
+            if (!q.length) { Setcord.showToast('Nothing to publish', 'info'); return; }
+            var overlay = document.createElement('div');
+            overlay.className = 'tm-publish-overlay';
+            overlay.innerHTML = '<div class="tm-publish-box" style="position:relative;overflow:hidden;">' +
+                '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#fbbf24,transparent);"></div>' +
+                '<div class="tm-publish-title">⚡ Publishing ' + q.length + ' change(s)</div>' +
+                '<div class="tm-publish-sub">Applying to Discord…</div>' +
+                '<div class="tm-progress-bar-wrap"><div class="tm-progress-bar" id="tm-pbar"></div></div>' +
+                '<div class="tm-publish-log" id="tm-plog"></div>' +
+                '<button class="btn btn-ghost" id="tm-done-btn" style="display:none;width:100%;justify-content:center;" onclick="this.closest(\'.tm-publish-overlay\').remove();loadChannels()">Done ✓</button>' +
+                '</div>';
+            document.body.appendChild(overlay);
+            TM.publish(function (done, total, result) {
+                var bar = document.getElementById('tm-pbar');
+                var log = document.getElementById('tm-plog');
+                if (bar) bar.style.width = Math.round(done / total * 100) + '%';
+                if (log && result) {
+                    var item = document.createElement('div');
+                    item.className = 'tm-log-item ' + (result.success ? 'ok' : 'fail');
+                    item.textContent = (result.success ? '✓ ' : '✕ ') + result.entry.label + (result.error ? ' — ' + result.error : '');
+                    log.appendChild(item); log.scrollTop = log.scrollHeight;
+                }
+            }).then(function (res) {
+                var btn = document.getElementById('tm-done-btn');
+                if (btn) btn.style.display = 'flex';
+                var ok = res.results.filter(function (r) { return r.success; }).length;
+                var fail = res.results.filter(function (r) { return !r.success; }).length;
+                Setcord.showToast(fail === 0 ? ok + ' change(s) published!' : ok + ' published, ' + fail + ' failed', fail === 0 ? 'success' : 'warning');
+            });
+        }
+
+        // ---- LOAD CHANNELS ----
+        function loadChannels() {
+            var container = document.getElementById('categories-container');
+            container.innerHTML = '<div class="loading-spinner">Loading…</div>';
+            destroySortables();
+
+            Setcord.apiFetch('/api/' + GUILD_ID + '/channels', {}, 'Loading channels…')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.success) { container.innerHTML = '<div class="empty-state"><p>' + esc(Setcord.parseDiscordError(data)) + '</p></div>'; return; }
+                    channelData = data.data;
+                    updateCategoryDropdowns();
+                    renderAll();
+                })
+                .catch(function () { container.innerHTML = '<div class="empty-state"><p>Failed to load. Check console.</p></div>'; });
+        }
+
+        function updateCategoryDropdowns() {
+            var selects = [document.getElementById('channel-category'), document.getElementById('move-target-cat')];
+            selects.forEach(function (sel) {
+                if (!sel) return;
+                sel.innerHTML = '<option value="">No Category</option>';
+                channelData.categories.forEach(function (cat) {
+                    sel.innerHTML += '<option value="' + cat.id + '">' + esc(cat.name) + '</option>';
+                });
+            });
+            var countEl = document.getElementById('ch-count');
+            var total = channelData.uncategorized.length + channelData.categories.reduce(function (a, c) { return a + c.channels.length; }, 0);
+            if (countEl) countEl.textContent = '(' + total + ')';
+        }
+
+        // ---- RENDER ALL ----
+        function renderAll() {
+            var container = document.getElementById('categories-container');
+            container.innerHTML = '';
+            destroySortables();
+
+            var uncatEl = buildCategoryEl(null, 'No Category', channelData.uncategorized, false);
+            container.appendChild(uncatEl);
+            initChannelSortable(uncatEl.querySelector('.channels-body'), null);
+
+            channelData.categories.forEach(function (cat) {
+                var catEl = buildCategoryEl(cat.id, cat.name, cat.channels, true);
+                container.appendChild(catEl);
+                initChannelSortable(catEl.querySelector('.channels-body'), cat.id);
+            });
+
+            initCategorySortable(container);
+        }
+
+        function buildCategoryEl(catId, catName, channels, isDeletable) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'category-section';
+            wrapper.dataset.catId = catId || '__none__';
+
+            var cbHtml = isDeletable
+                ? '<input type="checkbox" class="cat-bulk-checkbox" data-cat-id="' + catId + '" onchange="onCatCheckboxChange(this)">'
+                : '<span style="width:19px;display:inline-block;flex-shrink:0;"></span>';
+
+            wrapper.innerHTML =
+                '<div class="category-header">' +
+                cbHtml +
+                '<span class="category-name" onclick="toggleCollapse(this)">' +
+                '<span class="collapse-arrow" style="display:inline-block;width:12px;">▾</span> ' + esc(catName) +
+                '</span>' +
+                '<div style="display:flex;align-items:center;gap:4px;">' +
+                '<button class="cat-select-all-btn" onclick="selectCategory(\'' + esc(catId || '__none__') + '\')" title="Select all channels in category">☑ Channels</button>' +
+                (isDeletable ? '<button class="action-btn delete" onclick="deleteCategory(\'' + catId + '\',\'' + esc(catName) + '\')" title="Delete category">🗑️</button>' : '') +
+                (isDeletable ? '<span class="drag-handle cat-drag-handle" title="Drag category" style="cursor:grab;font-size:14px;padding:0 4px;color:var(--text-muted);">⠿⠿</span>' : '') +
+                '</div>' +
+                '</div>' +
+                '<div class="channels-body" data-cat-id="' + (catId || '__none__') + '"></div>';
+
+            var body = wrapper.querySelector('.channels-body');
+            channels.forEach(function (ch) { body.appendChild(buildChannelEl(ch)); });
+
+            return wrapper;
+        }
+
+        function buildChannelEl(ch) {
+            var el = document.createElement('div');
+            el.className = 'channel-item';
+            el.dataset.channelId = ch.id;
+            el.dataset.type = ch.type;
+            el.dataset.name = ch.name;
+
+            el.innerHTML =
+                '<input type="checkbox" class="bulk-checkbox" data-id="' + ch.id + '" onchange="onCheckboxChange(this)">' +
+                '<div class="drag-handle" title="Drag to reorder">⠿</div>' +
+                '<div class="channel-info" onclick="onChannelClick(this,\'' + ch.id + '\')" style="cursor:pointer;flex:1;">' +
+                '<span class="channel-icon">' + channelIcon(ch.type) + '</span>' +
+                '<span class="channel-name">' + esc(ch.name) + '</span>' +
+                '</div>' +
+                '<div class="channel-actions">' +
+                '<button class="action-btn" onclick="startRename(\'' + ch.id + '\',\'' + esc(ch.name).replace(/'/g, "\\'") + '\')" title="Rename">✏️</button>' +
+                '<button class="action-btn delete" onclick="deleteSingle(\'' + ch.id + '\',\'' + esc(ch.name).replace(/'/g, "\\'") + '\')" title="Delete">🗑️</button>' +
+                '</div>';
+
+            return el;
+        }
+
+        function onChannelClick(infoEl, channelId) {
+            if (bulkMode) {
+                var cb = infoEl.parentElement.querySelector('.bulk-checkbox');
+                if (cb) { cb.checked = !cb.checked; onCheckboxChange(cb); }
+            }
+        }
+
+        function toggleCollapse(nameEl) {
+            var section = nameEl.closest('.category-section');
+            var body = section.querySelector('.channels-body');
+            var arrow = nameEl.querySelector('.collapse-arrow');
+            if (!body) return;
+            var hidden = body.style.display === 'none';
+            body.style.display = hidden ? '' : 'none';
+            if (arrow) arrow.textContent = hidden ? '▾' : '▸';
+        }
+
+        // ---- SORTABLE INIT ----
+        function destroySortables() {
+            sortableInstances.forEach(function (s) { try { s.destroy(); } catch (e) { } });
+            sortableInstances = [];
+            if (categorySortable) { try { categorySortable.destroy(); } catch (e) { } categorySortable = null; }
+        }
+
+        function initChannelSortable(bodyEl, catId) {
+            if (!bodyEl) return;
+            var s = new Sortable(bodyEl, {
+                group: 'channels',
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                fallbackOnBody: true,
+                swapThreshold: 0.5,
+                onEnd: function (evt) {
+                    var channelId = evt.item.dataset.channelId;
+                    var newBodyEl = evt.to;
+                    var oldBodyEl = evt.from;
+                    var newCatId = newBodyEl.dataset.catId === '__none__' ? null : newBodyEl.dataset.catId;
+                    var oldCatId = oldBodyEl.dataset.catId === '__none__' ? null : oldBodyEl.dataset.catId;
+
+                    if (newCatId !== oldCatId) {
+                        // Cross-category move — call API, revert visual on fail
+                        var label = 'Move #' + evt.item.dataset.name + ' → ' + (newCatId ? 'category' : 'root');
+                        var result = TM.intercept('moveChannel', { channelId: channelId, parentId: newCatId }, label);
+                        if (!result.intercepted) {
+                            Setcord.apiFetch('/api/' + GUILD_ID + '/channels/' + channelId, {
+                                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ parentId: newCatId })
+                            }, 'Moving channel…')
+                                .then(function (r) { return r.json(); }).then(function (data) {
+                                    if (data.success) Setcord.showToast('Channel moved!', 'success');
+                                    else { Setcord.showToast(Setcord.parseDiscordError(data), 'error'); loadChannels(); }
+                                }).catch(function () { Setcord.showToast('Move failed', 'error'); loadChannels(); });
+                        }
+                    } else {
+                        // Same-category reorder — call the reorder API and verify with Discord
+                        var positions = [];
+                        newBodyEl.querySelectorAll('.channel-item[data-channel-id]').forEach(function (el, idx) {
+                            positions.push({ channel: el.dataset.channelId, position: idx });
+                        });
+
+                        if (TM.isActive()) {
+                            Setcord.showToast('Reorder queued', 'warning', 2000);
+                            return;
+                        }
+
+                        Setcord.apiFetch('/api/' + GUILD_ID + '/channels/order', {
+                            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ positions: positions })
+                        }, 'Reordering…')
+                            .then(function (r) { return r.json(); }).then(function (data) {
+                                if (data.success) {
+                                    Setcord.showToast('Order saved to Discord ✓', 'success', 2500);
+                                } else {
+                                    Setcord.showToast('Discord rejected reorder: ' + Setcord.parseDiscordError(data), 'error', 5000);
+                                    loadChannels(); // revert visual
+                                }
+                            }).catch(function () { Setcord.showToast('Reorder failed', 'error'); loadChannels(); });
+                    }
+                }
+            });
+            sortableInstances.push(s);
+        }
+
+        function initCategorySortable(container) {
+            categorySortable = new Sortable(container, {
+                animation: 200,
+                handle: '.cat-drag-handle',
+                ghostClass: 'category-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                filter: '.channel-item',
+                onEnd: function (evt) {
+                    Setcord.showToast('Category order updated (visual)', 'info', 3000);
+                }
+            });
+        }
+
+        // ---- BULK MODE ----
+        function toggleBulkMode() {
+            if (bulkMode) exitBulkMode();
+            else {
+                bulkMode = true;
+                document.body.classList.add('bulk-mode');
+                selectedIds.clear();
+                selectedCatIds.clear();
+                updateBulkBar();
+                Setcord.showToast('Select channels or categories, then use the top bar', 'info', 3000);
+            }
+        }
+
+        function exitBulkMode() {
+            bulkMode = false;
+            document.body.classList.remove('bulk-mode');
+            selectedIds.clear();
+            selectedCatIds.clear();
+            document.querySelectorAll('.channel-item').forEach(function (el) {
+                el.classList.remove('selected-bulk');
+                var cb = el.querySelector('.bulk-checkbox');
+                if (cb) cb.checked = false;
+            });
+            document.querySelectorAll('.category-section').forEach(function (el) {
+                el.classList.remove('selected-cat-bulk');
+                var cb = el.querySelector('.cat-bulk-checkbox');
+                if (cb) cb.checked = false;
+            });
+            document.getElementById('move-cat-card').style.display = 'none';
+            updateBulkBar();
+        }
+
+        function onCheckboxChange(cb) {
+            var id = cb.dataset.id;
+            var item = cb.closest('.channel-item');
+            if (cb.checked) { selectedIds.add(id); item.classList.add('selected-bulk'); }
+            else { selectedIds.delete(id); item.classList.remove('selected-bulk'); }
+            updateBulkBar();
+        }
+
+        function onCatCheckboxChange(cb) {
+            var catId = cb.dataset.catId;
+            var section = cb.closest('.category-section');
+            if (cb.checked) { selectedCatIds.add(catId); section.classList.add('selected-cat-bulk'); }
+            else { selectedCatIds.delete(catId); section.classList.remove('selected-cat-bulk'); }
+            updateBulkBar();
+        }
+
+        function selectAll() {
+            // Select all CHANNELS only (not categories per spec)
+            document.querySelectorAll('.bulk-checkbox').forEach(function (cb) {
+                cb.checked = true;
+                selectedIds.add(cb.dataset.id);
+                cb.closest('.channel-item').classList.add('selected-bulk');
+            });
+            updateBulkBar();
+        }
+
+        function selectCategory(catId) {
+            var body = document.querySelector('.channels-body[data-cat-id="' + catId + '"]');
+            if (!body) return;
+            body.querySelectorAll('.bulk-checkbox').forEach(function (cb) {
+                cb.checked = true;
+                selectedIds.add(cb.dataset.id);
+                cb.closest('.channel-item').classList.add('selected-bulk');
+            });
+            updateBulkBar();
+        }
+
+        function updateBulkBar() {
+            var label = document.getElementById('bulk-count-label');
+            if (!label) return;
+            var parts = [];
+            if (selectedIds.size) parts.push(selectedIds.size + ' channel' + (selectedIds.size !== 1 ? 's' : ''));
+            if (selectedCatIds.size) parts.push(selectedCatIds.size + ' categor' + (selectedCatIds.size !== 1 ? 'ies' : 'y'));
+            label.textContent = parts.length ? parts.join(' + ') + ' selected' : '0 selected';
+        }
+
+        function bulkDelete() {
+            var channelIds = Array.from(selectedIds);
+            var categoryIds = Array.from(selectedCatIds);
+            var total = channelIds.length + categoryIds.length;
+            if (!total) { Setcord.showToast('Select channels or categories first', 'warning'); return; }
+
+            var desc = 'Permanently delete ';
+            if (channelIds.length) desc += channelIds.length + ' channel(s)';
+            if (channelIds.length && categoryIds.length) desc += ' and ';
+            if (categoryIds.length) desc += categoryIds.length + ' categor' + (categoryIds.length !== 1 ? 'ies' : 'y');
+
+            Setcord.showConfirmModal({
+                title: 'Delete ' + total + ' item(s)',
+                desc: desc,
+                confirmText: 'Delete All',
+                onConfirm: function () {
+                    if (TM.isActive()) {
+                        channelIds.forEach(function (id) {
+                            var el = document.querySelector('.channel-item[data-channel-id="' + id + '"]');
+                            TM.intercept('deleteChannel', { channelId: id }, 'Delete #' + (el ? el.dataset.name : id));
+                        });
+                        categoryIds.forEach(function (id) {
+                            var el = document.querySelector('.category-section[data-cat-id="' + id + '"]');
+                            var name = el ? el.querySelector('.category-name').textContent.trim() : id;
+                            TM.intercept('deleteCategory', { channelId: id }, 'Delete category: ' + name);
+                        });
+                        exitBulkMode();
+                        loadChannels();
+                        return;
+                    }
+
+                    // Delete channels first, then categories
+                    var allIds = channelIds.concat(categoryIds);
+                    Setcord.apiFetch('/api/' + GUILD_ID + '/channels/bulk-delete', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ channelIds: allIds })
+                    }, 'Deleting…')
+                        .then(function (r) { return r.json(); }).then(function (data) {
+                            var del = (data.deleted || []).length;
+                            var fail = (data.failed || []).length;
+                            Setcord.showToast(del + ' deleted' + (fail ? ' · ' + fail + ' failed' : ''), fail ? 'warning' : 'success');
+                            exitBulkMode();
+                            loadChannels();
+                        }).catch(function () { Setcord.showToast('Bulk delete failed', 'error'); });
+                }
+            });
+        }
+
+        function bulkMoveModal() {
+            if (!selectedIds.size) { Setcord.showToast('Select channels first (categories cannot be moved)', 'warning'); return; }
+            document.getElementById('move-cat-card').style.display = 'block';
+        }
+
+        function executeBulkMove() {
+            var targetCatId = document.getElementById('move-target-cat').value || null;
+            var ids = Array.from(selectedIds);
+            if (!ids.length) return;
+            document.getElementById('move-cat-card').style.display = 'none';
+
+            var chain = Promise.resolve();
+            var succeeded = 0, failed = 0;
+
+            ids.forEach(function (id) {
+                var el = document.querySelector('.channel-item[data-channel-id="' + id + '"]');
+                var name = el ? el.dataset.name : id;
+                var label = 'Move #' + name;
+
+                if (TM.isActive()) {
+                    TM.intercept('moveChannel', { channelId: id, parentId: targetCatId }, label);
+                    succeeded++;
+                    return;
+                }
+
+                chain = chain.then(function () {
+                    return fetch('/api/' + GUILD_ID + '/channels/' + id, {
+                        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ parentId: targetCatId })
+                    }).then(function (r) { return r.json(); }).then(function (data) {
+                        if (data.success) succeeded++;
+                        else failed++;
+                    }).catch(function () { failed++; });
+                });
+            });
+
+            chain.then(function () {
+                Setcord.showToast(succeeded + ' channel(s) moved' + (failed ? ' · ' + failed + ' failed' : ''), failed ? 'warning' : 'success');
+                exitBulkMode();
+                loadChannels();
+            });
+        }
+
+        // ---- CREATE CHANNEL ----
+        function createChannel() {
+            var nameInput = document.getElementById('channel-name');
+            var name = nameInput.value.trim();
+            var type = document.getElementById('channel-type').value;
+            var parentId = document.getElementById('channel-category').value || null;
+
+            showFieldError('channel-name-err', null);
+            showBanner('create-error', 'create-error-msg', null);
+
+            var err = Setcord.validateChannelName(name);
+            if (err) { showFieldError('channel-name-err', err); nameInput.classList.add('error-state'); return; }
+            nameInput.classList.remove('error-state');
+
+            var payload = { name: name, type: type, parentId: parentId || undefined };
+            var label = 'Create ' + channelIcon(type) + ' ' + name;
+
+            var result = TM.intercept('createChannel', payload, label);
             if (result.intercepted) {
-                var el = document.querySelector('.channel-item[data-channel-id="'+channelId+'"]');
-                if (el) { el.style.opacity='0.3'; el.style.textDecoration='line-through'; el.querySelector('.channel-actions').innerHTML='<span class="tm-queued-badge">queued</span>'; }
+                nameInput.value = '';
+                var catId = parentId || '__none__';
+                var body = document.querySelector('.channels-body[data-cat-id="' + catId + '"]');
+                if (body) {
+                    var fakeCh = { id: 'tm_' + Date.now(), name: name, type: type };
+                    var el = buildChannelEl(fakeCh);
+                    el.classList.add('tm-queued');
+                    el.querySelector('.channel-actions').innerHTML = '<span class="tm-queued-badge">queued</span>';
+                    body.appendChild(el);
+                } else {
+                    Setcord.showToast('Queued. Will appear after publish.', 'warning');
+                }
                 return;
             }
-            Setcord.apiFetch('/api/'+GUILD_ID+'/channels/'+channelId,{method:'DELETE'},'Deleting channel…')
-                .then(function(r){return r.json();}).then(function(data){
-                    if (data.success) { Setcord.showToast('Deleted','success'); loadChannels(); }
-                    else Setcord.showToast(Setcord.parseDiscordError(data),'error');
-                });
-        }
-    });
-}
 
-function deleteCategory(catId, name) {
-    Setcord.showConfirmModal({
-        title: 'Delete Category', desc: 'Permanently delete', targetName: name, confirmText: 'Delete Category',
-        onConfirm: function() {
-            var result = TM.intercept('deleteCategory', { channelId: catId }, 'Delete category: '+name);
+            var btn = document.getElementById('create-channel-btn');
+            btn.disabled = true; btn.textContent = 'Creating…';
+
+            Setcord.apiFetch('/api/' + GUILD_ID + '/channels', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }, 'Creating channel…')
+                .then(function (r) { return r.json(); }).then(function (data) {
+                    if (data.success) { Setcord.showToast('Channel created!', 'success'); nameInput.value = ''; loadChannels(); }
+                    else showBanner('create-error', 'create-error-msg', Setcord.parseDiscordError(data));
+                }).catch(function () { showBanner('create-error', 'create-error-msg', 'Network error.'); })
+                .finally(function () { btn.disabled = false; btn.textContent = 'Create Channel'; });
+        }
+
+        // ---- CREATE CATEGORY ----
+        function toggleCategoryForm() {
+            var f = document.getElementById('category-form');
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function createCategory() {
+            var input = document.getElementById('category-name');
+            var name = input.value.trim();
+            if (!name) { Setcord.showToast('Enter a category name', 'warning'); return; }
+
+            var result = TM.intercept('createCategory', { name: name }, 'Create category: ' + name);
             if (result.intercepted) {
-                var el = document.querySelector('.category-section[data-cat-id="'+catId+'"]');
-                if (el) { el.style.opacity='0.3'; }
+                input.value = '';
+                toggleCategoryForm();
+                var container = document.getElementById('categories-container');
+                var fakeId = 'tm_cat_' + Date.now();
+                var catEl = buildCategoryEl(fakeId, name + '  [queued]', [], false);
+                catEl.style.opacity = '0.6';
+                catEl.dataset.catId = fakeId;
+                container.appendChild(catEl);
+                initChannelSortable(catEl.querySelector('.channels-body'), fakeId);
+                var option = '<option value="' + fakeId + '">[queued] ' + esc(name) + '</option>';
+                document.getElementById('channel-category').innerHTML += option;
+                document.getElementById('move-target-cat').innerHTML += option;
                 return;
             }
-            Setcord.apiFetch('/api/'+GUILD_ID+'/channels/'+catId,{method:'DELETE'},'Deleting category…')
-                .then(function(r){return r.json();}).then(function(data){
-                    if (data.success) { Setcord.showToast('Category deleted','success'); loadChannels(); }
-                    else Setcord.showToast(Setcord.parseDiscordError(data),'error');
-                });
+
+            Setcord.apiFetch('/api/' + GUILD_ID + '/categories', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name })
+            }, 'Creating category…')
+                .then(function (r) { return r.json(); }).then(function (data) {
+                    if (data.success) {
+                        Setcord.showToast('Category "' + data.category.name + '" created!', 'success');
+                        input.value = '';
+                        toggleCategoryForm();
+                        loadChannels();
+                    } else {
+                        Setcord.showToast(Setcord.parseDiscordError(data), 'error');
+                    }
+                }).catch(function () { Setcord.showToast('Network error', 'error'); });
         }
-    });
-}
 
-// ---- RENAME ----
-function startRename(channelId, currentName) {
-    document.getElementById('rename-card').style.display = 'block';
-    document.getElementById('rename-input').value = currentName;
-    document.getElementById('rename-channel-id').value = channelId;
-    document.getElementById('rename-input').focus();
-    showFieldError('rename-name-err', null);
-    showBanner('rename-error','rename-error-msg', null);
-}
-function cancelRename() { document.getElementById('rename-card').style.display='none'; }
+        // ---- DELETE ----
+        function deleteSingle(channelId, name) {
+            Setcord.showConfirmModal({
+                title: 'Delete Channel', desc: 'Permanently delete', targetName: '#' + name, confirmText: 'Delete',
+                onConfirm: function () {
+                    var result = TM.intercept('deleteChannel', { channelId: channelId }, 'Delete #' + name);
+                    if (result.intercepted) {
+                        var el = document.querySelector('.channel-item[data-channel-id="' + channelId + '"]');
+                        if (el) { el.style.opacity = '0.3'; el.style.textDecoration = 'line-through'; el.querySelector('.channel-actions').innerHTML = '<span class="tm-queued-badge">queued</span>'; }
+                        return;
+                    }
+                    Setcord.apiFetch('/api/' + GUILD_ID + '/channels/' + channelId, { method: 'DELETE' }, 'Deleting channel…')
+                        .then(function (r) { return r.json(); }).then(function (data) {
+                            if (data.success) { Setcord.showToast('Deleted', 'success'); loadChannels(); }
+                            else Setcord.showToast(Setcord.parseDiscordError(data), 'error');
+                        });
+                }
+            });
+        }
 
-function submitRename() {
-    var channelId = document.getElementById('rename-channel-id').value;
-    var input = document.getElementById('rename-input');
-    var name = input.value.trim();
+        function deleteCategory(catId, name) {
+            Setcord.showConfirmModal({
+                title: 'Delete Category', desc: 'Permanently delete', targetName: name, confirmText: 'Delete Category',
+                onConfirm: function () {
+                    var result = TM.intercept('deleteCategory', { channelId: catId }, 'Delete category: ' + name);
+                    if (result.intercepted) {
+                        var el = document.querySelector('.category-section[data-cat-id="' + catId + '"]');
+                        if (el) { el.style.opacity = '0.3'; }
+                        return;
+                    }
+                    Setcord.apiFetch('/api/' + GUILD_ID + '/channels/' + catId, { method: 'DELETE' }, 'Deleting category…')
+                        .then(function (r) { return r.json(); }).then(function (data) {
+                            if (data.success) { Setcord.showToast('Category deleted', 'success'); loadChannels(); }
+                            else Setcord.showToast(Setcord.parseDiscordError(data), 'error');
+                        });
+                }
+            });
+        }
 
-    showFieldError('rename-name-err', null);
-    showBanner('rename-error','rename-error-msg', null);
+        // ---- RENAME ----
+        function startRename(channelId, currentName) {
+            document.getElementById('rename-card').style.display = 'block';
+            document.getElementById('rename-input').value = currentName;
+            document.getElementById('rename-channel-id').value = channelId;
+            document.getElementById('rename-input').focus();
+            showFieldError('rename-name-err', null);
+            showBanner('rename-error', 'rename-error-msg', null);
+        }
+        function cancelRename() { document.getElementById('rename-card').style.display = 'none'; }
 
-    var err = Setcord.validateChannelName(name);
-    if (err) { showFieldError('rename-name-err', err); input.classList.add('error-state'); return; }
-    input.classList.remove('error-state');
+        function submitRename() {
+            var channelId = document.getElementById('rename-channel-id').value;
+            var input = document.getElementById('rename-input');
+            var name = input.value.trim();
 
-    var result = TM.intercept('renameChannel', { channelId: channelId, name: name }, 'Rename → #'+name);
-    if (result.intercepted) {
-        var el = document.querySelector('.channel-item[data-channel-id="'+channelId+'"] .channel-name');
-        if (el) { el.textContent = name + ' '; el.insertAdjacentHTML('beforeend', '<span class="tm-queued-badge">queued</span>'); }
-        cancelRename();
-        return;
-    }
+            showFieldError('rename-name-err', null);
+            showBanner('rename-error', 'rename-error-msg', null);
 
-    fetch('/api/'+GUILD_ID+'/channels/'+channelId, {
-        method:'PATCH', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ name: name })
-    }).then(function(r){return r.json();}).then(function(data){
-        if (data.success) { Setcord.showToast('Renamed','success'); cancelRename(); loadChannels(); }
-        else showBanner('rename-error','rename-error-msg', Setcord.parseDiscordError(data));
-    }).catch(function(){ showBanner('rename-error','rename-error-msg','Network error'); });
-}
+            var err = Setcord.validateChannelName(name);
+            if (err) { showFieldError('rename-name-err', err); input.classList.add('error-state'); return; }
+            input.classList.remove('error-state');
 
-// Enter key shortcuts
-document.addEventListener('keydown', function(e) {
-    if (e.key !== 'Enter') return;
-    var id = document.activeElement.id;
-    if (id==='channel-name') createChannel();
-    else if (id==='rename-input') submitRename();
-    else if (id==='category-name') createCategory();
-});
-</script>
+            var result = TM.intercept('renameChannel', { channelId: channelId, name: name }, 'Rename → #' + name);
+            if (result.intercepted) {
+                var el = document.querySelector('.channel-item[data-channel-id="' + channelId + '"] .channel-name');
+                if (el) { el.textContent = name + ' '; el.insertAdjacentHTML('beforeend', '<span class="tm-queued-badge">queued</span>'); }
+                cancelRename();
+                return;
+            }
+
+            fetch('/api/' + GUILD_ID + '/channels/' + channelId, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name })
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data.success) { Setcord.showToast('Renamed', 'success'); cancelRename(); loadChannels(); }
+                else showBanner('rename-error', 'rename-error-msg', Setcord.parseDiscordError(data));
+            }).catch(function () { showBanner('rename-error', 'rename-error-msg', 'Network error'); });
+        }
+
+        // Enter key shortcuts
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            var id = document.activeElement.id;
+            if (id === 'channel-name') createChannel();
+            else if (id === 'rename-input') submitRename();
+            else if (id === 'category-name') createCategory();
+        });
+    </script>
 </body>
+
 </html>
