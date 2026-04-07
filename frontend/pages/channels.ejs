@@ -335,6 +335,10 @@
         var TM = Setcord.TestMode;
         var GUILD_ID = '<%= guild.id %>';
 
+        var GUILD_HAS_COMMUNITY = '<%= guild.hasCommunity %>' === 'true';
+        var VOICE_TYPES = ['voice', 'stage'];
+        var TEXT_TYPES = ['text', 'announcement', 'forum'];
+
         var channelData = { categories: [], uncategorized: [] };
         var sortableInstances = [];
         var categorySortable = null;
@@ -443,6 +447,9 @@
                 .then(function (data) {
                     if (!data.success) { container.innerHTML = '<div class="empty-state"><p>' + esc(Setcord.parseDiscordError(data)) + '</p></div>'; return; }
                     channelData = data.data;
+                    var PROTECTED_IDS = new Set();
+                    if (data.rulesChannelId) PROTECTED_IDS.add(data.rulesChannelId);
+                    if (data.publicUpdatesChannelId) PROTECTED_IDS.add(data.publicUpdatesChannelId);
                     updateCategoryDropdowns();
                     renderAll();
                 })
@@ -518,16 +525,27 @@
             el.dataset.type = ch.type;
             el.dataset.name = ch.name;
 
+            var isProtected = (typeof PROTECTED_IDS !== 'undefined') && PROTECTED_IDS.has(ch.id);
+            el.dataset.protected = isProtected ? 'true' : 'false';
+
+            var cbHtml = isProtected
+                ? '<span class="channel-protected-icon" title="Required by Community — cannot be deleted" style="width:15px;flex-shrink:0;font-size:11px;">🔒</span>'
+                : '<input type="checkbox" class="bulk-checkbox" data-id="' + ch.id + '" onchange="onCheckboxChange(this)">';
+
+            var deleteBtn = isProtected
+                ? ''
+                : '<button class="action-btn delete" onclick="deleteSingle(\'' + ch.id + '\',\'' + esc(ch.name).replace(/\'/g, "\\'") + '\')" title="Delete">🗑️</button>';
+
             el.innerHTML =
-                '<input type="checkbox" class="bulk-checkbox" data-id="' + ch.id + '" onchange="onCheckboxChange(this)">' +
+                cbHtml +
                 '<div class="drag-handle" title="Drag to reorder">⠿</div>' +
                 '<div class="channel-info" onclick="onChannelClick(this,\'' + ch.id + '\')" style="cursor:pointer;flex:1;">' +
                 '<span class="channel-icon">' + channelIcon(ch.type) + '</span>' +
                 '<span class="channel-name">' + esc(ch.name) + '</span>' +
                 '</div>' +
                 '<div class="channel-actions">' +
-                '<button class="action-btn" onclick="startRename(\'' + ch.id + '\',\'' + esc(ch.name).replace(/'/g, "\\'") + '\')" title="Rename">✏️</button>' +
-                '<button class="action-btn delete" onclick="deleteSingle(\'' + ch.id + '\',\'' + esc(ch.name).replace(/'/g, "\\'") + '\')" title="Delete">🗑️</button>' +
+                '<button class="action-btn" onclick="startRename(\'' + ch.id + '\',\'' + esc(ch.name).replace(/\'/g, "\\'") + '\')" title="Rename">✏️</button>' +
+                deleteBtn +
                 '</div>';
 
             return el;
@@ -568,7 +586,24 @@
                 dragClass: 'sortable-drag',
                 fallbackOnBody: true,
                 swapThreshold: 0.5,
+                onMove: function (evt) {
+                    var draggedType = (evt.dragged.dataset.type || '').toLowerCase();
+                    var relatedType = (evt.related.dataset.type || '').toLowerCase();
+
+                    function isVoice(t) { return t === 'voice' || t === 'stage'; }
+                    function isText(t) { return t === 'text' || t === 'announcement' || t === 'forum'; }
+
+                    // Block: voice trying to go above a text channel
+                    if (isVoice(draggedType) && isText(relatedType) && !evt.willInsertAfter) {
+                        return false;
+                    }
+                    // Block: text trying to go below a voice channel
+                    if (isText(draggedType) && isVoice(relatedType) && evt.willInsertAfter) {
+                        return false;
+                    }
+                },
                 onEnd: function (evt) {
+                    if (evt.oldIndex === evt.newIndex && evt.from === evt.to) return;
                     var channelId = evt.item.dataset.channelId;
                     var newBodyEl = evt.to;
                     var oldBodyEl = evt.from;
@@ -590,29 +625,77 @@
                                 }).catch(function () { Setcord.showToast('Move failed', 'error'); loadChannels(); });
                         }
                     } else {
-                        // Same-category reorder — call the reorder API and verify with Discord
+                        // ── Same-section reorder ──
+
+                        // Detect if this is the uncategorized section.
+                        // Adjust the selector to match whatever class/id your uncategorized list has.
+                        // Common patterns: data-cat-id="none", class="uncategorized-list", id="uncategorized-channels"
+                        var isUncategorized = newBodyEl.hasAttribute('data-uncategorized') ||
+                            newBodyEl.dataset.catId === 'none' ||
+                            newBodyEl.dataset.catId === '__none__' ||
+                            newBodyEl.classList.contains('uncategorized-list');
+
+                        if (isUncategorized) {
+                            // Discord rule: in uncategorized, ALL text channels must come before ALL voice/stage channels.
+                            // No mixing allowed in either direction.
+                            var orderedItems = Array.from(newBodyEl.querySelectorAll('.channel-item[data-channel-id]'));
+                            var seenVoice = false;
+                            var hasViolation = false;
+
+                            for (var oi = 0; oi < orderedItems.length; oi++) {
+                                var otype = (orderedItems[oi].dataset.type || '').toLowerCase();
+                                var isVoiceType = (otype === 'voice' || otype === 'stage');
+                                var isTextType = (otype === 'text' || otype === 'announcement' || otype === 'forum');
+
+                                if (isVoiceType) {
+                                    seenVoice = true;
+                                } else if (isTextType && seenVoice) {
+                                    // A text channel is appearing below a voice channel — not allowed
+                                    hasViolation = true;
+                                    break;
+                                }
+                            }
+
+                            if (hasViolation) {
+                                Setcord.showToast(
+                                    'Discord doesn\'t allow mixing text and voice channels outside a category. Text channels must stay above voice channels.',
+                                    'error', 5000
+                                );
+                                loadChannels(); // revert to what Discord actually has
+                                return;
+                            }
+                        }
+                        // Inside a category — no ordering restriction, Discord allows any order
+
                         var positions = [];
                         newBodyEl.querySelectorAll('.channel-item[data-channel-id]').forEach(function (el, idx) {
                             positions.push({ channel: el.dataset.channelId, position: idx });
                         });
 
-                        if (TM.isActive()) {
+                        if (TM && TM.isActive()) {
                             Setcord.showToast('Reorder queued', 'warning', 2000);
                             return;
                         }
 
                         Setcord.apiFetch('/api/' + GUILD_ID + '/channels/order', {
-                            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ positions: positions })
-                        }, 'Reordering…')
-                            .then(function (r) { return r.json(); }).then(function (data) {
+                        }, 'Saving order…')
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) {
                                 if (data.success) {
-                                    Setcord.showToast('Order saved to Discord ✓', 'success', 2500);
+                                    Setcord.showToast('Order saved ✓', 'success', 2000);
+                                    loadChannels(); // confirm visual = Discord actual state
                                 } else {
-                                    Setcord.showToast('Discord rejected reorder: ' + Setcord.parseDiscordError(data), 'error', 5000);
-                                    loadChannels(); // revert visual
+                                    Setcord.showToast('Discord rejected: ' + (data.error || 'Unknown error'), 'error', 5000);
+                                    loadChannels();
                                 }
-                            }).catch(function () { Setcord.showToast('Reorder failed', 'error'); loadChannels(); });
+                            })
+                            .catch(function () {
+                                Setcord.showToast('Reorder failed', 'error');
+                                loadChannels();
+                            });
                     }
                 }
             });
@@ -682,11 +765,12 @@
         }
 
         function selectAll() {
-            // Select all CHANNELS only (not categories per spec)
             document.querySelectorAll('.bulk-checkbox').forEach(function (cb) {
+                var item = cb.closest('.channel-item');
+                if (item && item.dataset.protected === 'true') return; // skip protected
                 cb.checked = true;
                 selectedIds.add(cb.dataset.id);
-                cb.closest('.channel-item').classList.add('selected-bulk');
+                item.classList.add('selected-bulk');
             });
             updateBulkBar();
         }
@@ -712,7 +796,9 @@
         }
 
         function bulkDelete() {
-            var channelIds = Array.from(selectedIds);
+            var channelIds = Array.from(selectedIds).filter(function (id) {
+                return !(typeof PROTECTED_IDS !== 'undefined' && PROTECTED_IDS.has(id));
+            });
             var categoryIds = Array.from(selectedCatIds);
             var total = channelIds.length + categoryIds.length;
             if (!total) { Setcord.showToast('Select channels or categories first', 'warning'); return; }
@@ -836,6 +922,16 @@
                 return;
             }
 
+            // Community feature check — Announcement & Stage require it
+            if ((type === 'announcement' || type === 'stage') && !GUILD_HAS_COMMUNITY) {
+                showBanner('create-error', 'create-error-msg',
+                    type === 'announcement'
+                        ? '⚠️ Announcement channels require Community to be enabled on your server. Go to Discord Server Settings → Community → Get Started, then try again.'
+                        : '⚠️ Stage channels require Community to be enabled on your server. Go to Discord Server Settings → Community → Get Started, then try again.'
+                );
+                return;
+            }
+
             var btn = document.getElementById('create-channel-btn');
             btn.disabled = true; btn.textContent = 'Creating…';
 
@@ -844,8 +940,13 @@
                 body: JSON.stringify(payload)
             }, 'Creating channel…')
                 .then(function (r) { return r.json(); }).then(function (data) {
-                    if (data.success) { Setcord.showToast('Channel created!', 'success'); nameInput.value = ''; loadChannels(); }
-                    else showBanner('create-error', 'create-error-msg', Setcord.parseDiscordError(data));
+                    if (data.success) {
+                        nameInput.value = '';
+                        Setcord.showToast('Channel created!', 'success');
+                        loadChannels();
+                    } else {
+                        showBanner('create-error', 'create-error-msg', Setcord.parseDiscordError(data));
+                    }
                 }).catch(function () { showBanner('create-error', 'create-error-msg', 'Network error.'); })
                 .finally(function () { btn.disabled = false; btn.textContent = 'Create Channel'; });
         }
