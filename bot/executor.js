@@ -5,6 +5,10 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
     ],
+    rest: {
+        timeout: 30000,
+        retries: 3,
+    },
 });
 
 let isReady = false;
@@ -18,10 +22,8 @@ client.once(Events.ClientReady, () => {
 // GUILD JOIN — Welcome Message
 // ========================
 
-
 client.on(Events.GuildCreate, async (guild) => {
     try {
-        // Fetch full guild so members.me and features are populated
         const fullGuild = await guild.fetch();
         await fullGuild.members.fetch(client.user.id).catch(() => null);
 
@@ -140,50 +142,74 @@ function buildPermissionError(guild, role) {
 // CHANNEL OPERATIONS
 // ========================
 
+async function withRetry(fn, retries = 3, delay = 2000) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await fn();
+        } catch (err) {
+            const isTimeout = err.message?.includes('Timeout') || err.code === 'ECONNRESET';
+            if (isTimeout && i < retries - 1) {
+                console.warn(`[BOT] Timeout, retrying (${i + 1}/${retries})...`);
+                await new Promise(r => setTimeout(r, delay));
+            } else {
+                throw err;
+            }
+        }
+    }
+}
+
 async function fetchChannels(guildId) {
     try {
         const guild = await getGuild(guildId);
-        await guild.fetch(); // ensures rulesChannelId and all fields are populated
+        await guild.fetch();
         const rulesChannelId = guild.rulesChannelId;
         const publicUpdatesChannelId = guild.publicUpdatesChannelId;
-        const channels = await guild.channels.fetch();
+
+        const channels = await withRetry(() => guild.channels.fetch());
 
         const result = { categories: [], uncategorized: [] };
         const categoryMap = new Map();
 
-        channels.forEach((ch) => {
-            if (ch && ch.type === ChannelType.GuildCategory) {
+        // ── Step 1: Build category buckets, sorted by rawPosition ──
+        [...channels.values()]
+            .filter(ch => ch && ch.type === ChannelType.GuildCategory)
+            .sort((a, b) => a.rawPosition - b.rawPosition)
+            .forEach(ch => {
                 categoryMap.set(ch.id, {
                     id: ch.id,
                     name: ch.name,
-                    position: ch.position,
+                    position: ch.rawPosition,
                     channels: [],
                 });
-            }
-        });
+            });
 
-        channels.forEach((ch) => {
-            if (!ch || ch.type === ChannelType.GuildCategory) return;
-            const channelData = {
-                id: ch.id,
-                name: ch.name,
-                type: ch.type === ChannelType.GuildVoice ? 'voice' :
-                    ch.type === ChannelType.GuildStageVoice ? 'stage' :
-                        ch.type === ChannelType.GuildAnnouncement ? 'announcement' :
-                            ch.type === ChannelType.GuildForum ? 'forum' : 'text',
-                position: ch.position,
-                parentId: ch.parentId,
-                isProtected: ch.id === rulesChannelId || ch.id === publicUpdatesChannelId,
-            };
-            if (ch.parentId && categoryMap.has(ch.parentId)) {
-                categoryMap.get(ch.parentId).channels.push(channelData);
-            } else {
-                result.uncategorized.push(channelData);
-            }
-        });
+        // ── Step 2: Bucket non-category channels, sorted by rawPosition ──
+        // Sorting by rawPosition here guarantees text channels inserted before
+        // voice channels when they share a category, matching Discord's actual layout.
+        [...channels.values()]
+            .filter(ch => ch && ch.type !== ChannelType.GuildCategory)
+            .sort((a, b) => a.rawPosition - b.rawPosition)
+            .forEach(ch => {
+                const channelData = {
+                    id: ch.id,
+                    name: ch.name,
+                    type: ch.type === ChannelType.GuildVoice ? 'voice' :
+                        ch.type === ChannelType.GuildStageVoice ? 'stage' :
+                            ch.type === ChannelType.GuildAnnouncement ? 'announcement' :
+                                ch.type === ChannelType.GuildForum ? 'forum' : 'text',
+                    position: ch.rawPosition,
+                    parentId: ch.parentId,
+                    isProtected: ch.id === rulesChannelId || ch.id === publicUpdatesChannelId,
+                };
+                if (ch.parentId && categoryMap.has(ch.parentId)) {
+                    categoryMap.get(ch.parentId).channels.push(channelData);
+                } else {
+                    result.uncategorized.push(channelData);
+                }
+            });
 
-        categoryMap.forEach((cat) => { cat.channels.sort((a, b) => a.position - b.position); });
-        result.categories = Array.from(categoryMap.values()).sort((a, b) => a.position - b.position);
+        // ── Step 3: Categories are already ordered; channels within each are too ──
+        result.categories = [...categoryMap.values()];
         result.uncategorized.sort((a, b) => a.position - b.position);
 
         return {
@@ -196,6 +222,10 @@ async function fetchChannels(guildId) {
         console.error('[BOT] Error fetching channels:', err.message);
         return { success: false, error: err.message };
     }
+}
+
+function isVoiceType(type) {
+    return type === ChannelType.GuildVoice || type === ChannelType.GuildStageVoice;
 }
 
 async function createChannel(guildId, channelName, channelType = 'text', parentId = null) {
@@ -222,21 +252,58 @@ async function createChannel(guildId, channelName, channelType = 'text', parentI
             default: type = ChannelType.GuildText;
         }
 
+        const isTextLike = !isVoiceType(type);
+
+        // ── Step 1: Create channel with no position option ──
+        // Passing position + parent together triggers "Only one channel can have
+        // a parent_id modified at a time". Always create first, reorder after.
         const options = { name: channelName, type, reason: 'Created by Setcord' };
         if (parentId) options.parent = parentId;
 
-        const isNonVoice = channelType !== 'voice' && channelType !== 'stage';
-        if (isNonVoice && parentId) {
-            const allChannels = await guild.channels.fetch();
-            const firstVoice = allChannels
-                .filter(ch => ch && ch.parentId === parentId &&
-                    (ch.type === ChannelType.GuildVoice || ch.type === ChannelType.GuildStageVoice))
-                .sort((a, b) => a.position - b.position)
-                .first();
-            if (firstVoice) options.position = firstVoice.position;
-        }
-
         const channel = await guild.channels.create(options);
+
+        // ── Step 2: Bulk-reorder the category so text stays above voice ──
+        // We never use setPosition() — it operates on guild-wide absolute slots
+        // and produces unpredictable results when mixed with category scope.
+        // Instead, fetch all siblings fresh, sort them into the correct order,
+        // then issue one setPositions() call with explicit slot numbers.
+        if (isTextLike && parentId) {
+            try {
+                const allChannels = await guild.channels.fetch();
+
+                // All channels in this category (including the new one), sorted by current rawPosition
+                const siblings = [...allChannels.values()]
+                    .filter(ch => ch && ch.parentId === parentId)
+                    .sort((a, b) => a.rawPosition - b.rawPosition);
+
+                const hasVoice = siblings.some(ch => isVoiceType(ch.type));
+
+                if (hasVoice) {
+                    // Desired order: all non-voice first (preserving their relative order),
+                    // then all voice channels (preserving their relative order).
+                    const textGroup  = siblings.filter(ch => !isVoiceType(ch.type));
+                    const voiceGroup = siblings.filter(ch =>  isVoiceType(ch.type));
+                    const ordered    = [...textGroup, ...voiceGroup];
+
+                    // Use the lowest rawPosition in the category as the base slot,
+                    // then assign consecutive integers. This keeps the category's
+                    // guild-wide position band intact and avoids collisions.
+                    const basePosition = siblings[0].rawPosition;
+
+                    const positionData = ordered.map((ch, i) => ({
+                        channel: ch.id,
+                        position: basePosition + i,
+                    }));
+
+                    // Sequential await — never Promise.all for position updates.
+                    await guild.channels.setPositions(positionData);
+                }
+            } catch (posErr) {
+                // Non-fatal: channel was created. Dashboard will show correct order
+                // on the next fetch since fetchChannels sorts by rawPosition.
+                console.warn('[BOT] Could not reorder category after creation:', posErr.message);
+            }
+        }
 
         console.log(`[BOT] Created channel #${channel.name} in ${guild.name}`);
         return { success: true, channel: { id: channel.id, name: channel.name, type: channelType } };
@@ -314,7 +381,7 @@ async function createCategory(guildId, categoryName) {
 async function reorderChannels(guildId, positions) {
     try {
         const guild = await getGuild(guildId);
-        const channels = await guild.channels.fetch();
+        const channels = await withRetry(() => guild.channels.fetch());
 
         function isVoice(t) { return t === ChannelType.GuildVoice || t === ChannelType.GuildStageVoice; }
         function isText(t) {
@@ -480,7 +547,6 @@ async function getGuildInfo(guildId) {
                 name: guild.name,
                 icon: guild.iconURL({ size: 64 }),
                 memberCount: guild.memberCount,
-                // Pass features so frontend can check community, etc.
                 features: guild.features,
                 hasCommunity: guild.features.includes('COMMUNITY'),
             },
