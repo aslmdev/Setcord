@@ -224,43 +224,19 @@ async function createChannel(guildId, channelName, channelType = 'text', parentI
 
         const options = { name: channelName, type, reason: 'Created by Setcord' };
         if (parentId) options.parent = parentId;
-        const channel = await guild.channels.create(options);
 
-        // Auto-reposition: if new channel is non-voice, move it above any voice channels in the same group
         const isNonVoice = channelType !== 'voice' && channelType !== 'stage';
-        if (isNonVoice) {
+        if (isNonVoice && parentId) {
             const allChannels = await guild.channels.fetch();
-            const siblings = allChannels.filter(ch =>
-                ch && ch.id !== channel.id &&
-                ch.type !== ChannelType.GuildCategory &&
-                (ch.parentId || null) === (parentId || null)
-            ).sort((a, b) => a.position - b.position);
-
-            const firstVoiceIdx = siblings.findIndex(ch =>
-                ch.type === ChannelType.GuildVoice || ch.type === ChannelType.GuildStageVoice
-            );
-
-            if (firstVoiceIdx !== -1) {
-                const firstVoice = siblings.at(firstVoiceIdx);
-                await channel.setPosition(firstVoice.position, { relative: false });
-
-                // Wait for Discord to apply, then verify
-                await new Promise(r => setTimeout(r, 800));
-                const freshChannels = await guild.channels.fetch();
-                const freshNew = freshChannels.get(channel.id);
-                const freshVoice = freshChannels.get(firstVoice.id);
-
-                if (freshNew && freshVoice && freshNew.position > freshVoice.position) {
-                    // Discord didn't honor the reorder — delete the channel and return error
-                    await channel.delete('Setcord: position validation failed').catch(() => null);
-                    return {
-                        success: false,
-                        error: 'Discord rejected the channel position. A text channel cannot be placed below a voice channel. Try creating it in a category first.',
-                    };
-                }
-            }
-
+            const firstVoice = allChannels
+                .filter(ch => ch && ch.parentId === parentId &&
+                    (ch.type === ChannelType.GuildVoice || ch.type === ChannelType.GuildStageVoice))
+                .sort((a, b) => a.position - b.position)
+                .first();
+            if (firstVoice) options.position = firstVoice.position;
         }
+
+        const channel = await guild.channels.create(options);
 
         console.log(`[BOT] Created channel #${channel.name} in ${guild.name}`);
         return { success: true, channel: { id: channel.id, name: channel.name, type: channelType } };
