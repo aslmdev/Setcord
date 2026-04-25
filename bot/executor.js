@@ -23,21 +23,28 @@ client.once(Events.ClientReady, () => {
 // ========================
 
 client.on(Events.GuildCreate, async (guild) => {
+    console.log(`[BOT] GuildCreate fired for: ${guild.name}`);
     try {
         const fullGuild = await guild.fetch();
         await fullGuild.members.fetch(client.user.id).catch(() => null);
+        await fullGuild.channels.fetch().catch(() => null);
 
         const dashboardUrl = process.env.DASHBOARD_URL || `http://localhost:${process.env.PORT || 3000}`;
 
-        let targetChannel = fullGuild.systemChannel;
-
-        if (!targetChannel || !targetChannel.permissionsFor(fullGuild.members.me)?.has('SendMessages')) {
-            targetChannel = fullGuild.channels.cache.find(
-                ch => ch.type === ChannelType.GuildText &&
-                    ch.permissionsFor(fullGuild.members.me)?.has('SendMessages') &&
-                    ch.permissionsFor(fullGuild.members.me)?.has('ViewChannel')
-            ) || null;
-        }
+        const targetChannel =
+            fullGuild.channels.cache.find(ch =>
+                ch.type === ChannelType.GuildText &&
+                ch.name.toLowerCase().includes('moderation') &&
+                ch.permissionsFor(client.user)?.has('SendMessages') &&
+                ch.permissionsFor(client.user)?.has('ViewChannel')
+            ) ||
+            fullGuild.systemChannel ||
+            fullGuild.channels.cache.find(ch =>
+                ch.type === ChannelType.GuildText &&
+                ch.permissionsFor(client.user)?.has('SendMessages') &&
+                ch.permissionsFor(client.user)?.has('ViewChannel')
+            ) ||
+            null;
 
         if (!targetChannel) {
             console.log(`[BOT] No suitable channel found in ${fullGuild.name} to send welcome message`);
@@ -76,8 +83,8 @@ client.on(Events.GuildCreate, async (guild) => {
                         },
                         { type: 14, divider: true, spacing: 1 },
                         {
-                            type: 9,
-                            components: [{ type: 10, content: `**Ready to get started?**\n-# Open the dashboard, select this server, and start managing.` }],
+                            type: 10,
+                            content: `**Ready to get started?**\n-# Open the dashboard, select this server, and start managing.`,
                         },
                         {
                             type: 1,
@@ -281,9 +288,9 @@ async function createChannel(guildId, channelName, channelType = 'text', parentI
                 if (hasVoice) {
                     // Desired order: all non-voice first (preserving their relative order),
                     // then all voice channels (preserving their relative order).
-                    const textGroup  = siblings.filter(ch => !isVoiceType(ch.type));
-                    const voiceGroup = siblings.filter(ch =>  isVoiceType(ch.type));
-                    const ordered    = [...textGroup, ...voiceGroup];
+                    const textGroup = siblings.filter(ch => !isVoiceType(ch.type));
+                    const voiceGroup = siblings.filter(ch => isVoiceType(ch.type));
+                    const ordered = [...textGroup, ...voiceGroup];
 
                     // Use the lowest rawPosition in the category as the base slot,
                     // then assign consecutive integers. This keeps the category's
