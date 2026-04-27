@@ -262,7 +262,7 @@
         <div class="user-pill">
             <div class="user-avatar">
                 <% if (user.avatar) { %>
-                    <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png?size=64" alt="">
+                    <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.<%= user.avatar && user.avatar.startsWith('a_') ? 'gif' : 'webp' %>?size=64" alt="">
                 <% } else { %>
                     <%= (user.globalName || user.username).charAt(0).toUpperCase() %>
                 <% } %>

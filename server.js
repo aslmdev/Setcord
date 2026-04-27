@@ -123,6 +123,31 @@ app.get('/dashboard/:guildId/setup', requireAuth, async (req, res) => {
     res.render('setup', { user: req.session.user, guild: result.guild });
 });
 
+app.get('/dashboard/:guildId/settings', requireAuth, async (req, res) => {
+    try {
+        const guildId = req.params.guildId;
+        if (!isBotInGuild(guildId)) return res.redirect('/servers');
+        const result = await getGuildInfo(guildId);
+        if (!result.success) return res.redirect('/servers');
+        const guild = result.guild;
+        res.render('settings', {
+            user: req.session.user,
+            guild: {
+                id: guild.id,
+                name: guild.name,
+                icon: guild.icon,
+                hasCommunity: guild.features ? guild.features.includes('COMMUNITY') : false,
+                verificationLevel: guild.verificationLevel || 0,
+                explicitContentFilter: guild.explicitContentFilter || 0,
+                defaultMessageNotifications: guild.defaultMessageNotifications || 0
+            }
+        });
+    } catch (err) {
+        console.error('[ROUTE ERROR] /settings:', err);
+        res.status(500).send('Something went wrong: ' + err.message);
+    }
+});
+
 app.get('/dashboard', requireAuth, (req, res) => res.redirect('/servers'));
 app.use('/api', requireAuth, apiRoutes);
 app.use('/setup', requireAuth, setupRoutes);

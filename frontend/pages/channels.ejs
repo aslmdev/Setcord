@@ -507,7 +507,7 @@
                 '<div style="display:flex;align-items:center;gap:4px;">' +
                 '<button class="cat-select-all-btn" onclick="selectCategory(\'' + esc(catId || '__none__') + '\')" title="Select all channels in category">☑ Channels</button>' +
                 (isDeletable ? '<button class="action-btn delete" onclick="deleteCategory(\'' + catId + '\',\'' + esc(catName) + '\')" title="Delete category">🗑️</button>' : '') +
-                (isDeletable ? '<span class="drag-handle cat-drag-handle" title="Drag category" style="cursor:grab;font-size:14px;padding:0 4px;color:var(--text-muted);">⠿⠿</span>' : '') +
+                (isDeletable ? '<span class="cat-drag-handle" title="Drag category" style="cursor:grab;font-size:14px;padding:0 4px;color:var(--text-muted);">⠿⠿</span>' : '') +
                 '</div>' +
                 '</div>' +
                 '<div class="channels-body" data-cat-id="' + (catId || '__none__') + '"></div>';
@@ -701,7 +701,6 @@
             });
             sortableInstances.push(s);
         }
-
         function initCategorySortable(container) {
             categorySortable = new Sortable(container, {
                 animation: 200,
@@ -711,11 +710,121 @@
                 dragClass: 'sortable-drag',
                 filter: '.channel-item',
                 onEnd: function (evt) {
-                    Setcord.showToast('Category order updated (visual)', 'info', 3000);
+                    if (evt.oldIndex === evt.newIndex) return;
+
+                    var catId = evt.item.dataset.catId;
+                    if (!catId || catId === '__none__') return;
+
+                    var catBody = evt.item.querySelector('.channels-body');
+                    var channelIds = catBody
+                        ? Array.from(catBody.querySelectorAll('.channel-item[data-channel-id]')).map(function (el) { return el.dataset.channelId; })
+                        : [];
+
+                    if (channelIds.length > 0) {
+                        // Ask what to do with channels
+                        var existing = document.getElementById('cat-move-modal');
+                        if (existing) existing.remove();
+
+                        var backdrop = document.createElement('div');
+                        backdrop.className = 'modal-backdrop';
+                        backdrop.id = 'cat-move-modal';
+                        backdrop.innerHTML =
+                            '<div class="modal-box" id="modal-box">' +
+                            '<div class="modal-icon">📁</div>' +
+                            '<div class="modal-title">Move Category</div>' +
+                            '<div class="modal-desc">What should happen to the channels inside this category?</div>' +
+                            '<div class="modal-actions" style="flex-direction:column;gap:8px;">' +
+                            '<button class="btn btn-primary" id="cat-move-with" style="width:100%;justify-content:center;">Move with channels</button>' +
+                            '<button class="btn btn-ghost" id="cat-move-without" style="width:100%;justify-content:center;">Move category only (detach channels → No Category)</button>' +
+                            '<button class="btn btn-ghost" id="cat-move-cancel" style="width:100%;justify-content:center;">Cancel</button>' +
+                            '</div></div>';
+                        document.body.appendChild(backdrop);
+
+                        function closeModal() {
+                            backdrop.classList.add('closing');
+                            var box = document.getElementById('modal-box');
+                            if (box) box.classList.add('closing');
+                            setTimeout(function () { backdrop.remove(); }, 180);
+                        }
+
+                        document.getElementById('cat-move-with').onclick = function () {
+                            closeModal();
+                            executeCategoryReorder(container, []);
+                        };
+                        document.getElementById('cat-move-without').onclick = function () {
+                            closeModal();
+                            executeCategoryReorder(container, channelIds);
+                        };
+                        document.getElementById('cat-move-cancel').onclick = function () {
+                            closeModal();
+                            loadChannels();
+                        };
+                        backdrop.addEventListener('click', function (e) {
+                            if (e.target === backdrop) { closeModal(); loadChannels(); }
+                        });
+                    } else {
+                        // No channels inside, just reorder
+                        executeCategoryReorder(container, []);
+                    }
                 }
             });
         }
 
+        function executeCategoryReorder(container, channelsToDetach) {
+            var positions = [];
+            var idx = 0;
+            container.querySelectorAll('.category-section').forEach(function (el) {
+                var id = el.dataset.catId;
+                if (!id || id === '__none__') return;
+                positions.push({ channel: id, position: idx++ });
+            });
+
+            Setcord.apiFetch('/api/' + GUILD_ID + '/channels/order', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ positions: positions })
+            }, 'Moving category…')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.success) {
+                        Setcord.showToast('Failed: ' + (data.error || 'Unknown'), 'error');
+                        loadChannels();
+                        return;
+                    }
+                    if (!channelsToDetach || channelsToDetach.length === 0) {
+                        Setcord.showToast('Category moved!', 'success');
+                        loadChannels();
+                        return;
+                    }
+                    // Detach channels to No Category
+                    var chain = Promise.resolve();
+                    var failed = 0;
+                    channelsToDetach.forEach(function (chId) {
+                        chain = chain.then(function () {
+                            return fetch('/api/' + GUILD_ID + '/channels/' + chId, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ parentId: null })
+                            }).then(function (r) { return r.json(); })
+                                .then(function (d) { if (!d.success) failed++; })
+                                .catch(function () { failed++; });
+                        });
+                    });
+                    chain.then(function () {
+                        Setcord.showToast(
+                            failed > 0
+                                ? 'Category moved, ' + failed + ' channel(s) failed to detach'
+                                : 'Category moved, channels detached!',
+                            failed > 0 ? 'warning' : 'success'
+                        );
+                        loadChannels();
+                    });
+                })
+                .catch(function () {
+                    Setcord.showToast('Move failed', 'error');
+                    loadChannels();
+                });
+        }
         // ---- BULK MODE ----
         function toggleBulkMode() {
             if (bulkMode) exitBulkMode();

@@ -555,6 +555,7 @@ function apiFetch(url, options, loadingMsg) {
         });
 }
 
+
 // ========================
 // EXPORTS
 // ========================
@@ -573,4 +574,22 @@ window.Setcord = {
     showLoading: showLoading,
     hideLoading: hideLoading,
     apiFetch: apiFetch,
+    applyTheme: function(theme) {
+        document.body.classList.remove('theme-light', 'theme-dark');
+        if (theme && theme !== 'dark') document.body.classList.add('theme-' + theme);
+        localStorage.setItem('sc_theme', theme || 'dark');
+    },
+    applyListStyle: function(style) {
+        document.body.classList.remove('list-modern', 'list-discord', 'list-compact');
+        if (style && style !== 'modern') document.body.classList.add('list-' + style);
+        localStorage.setItem('sc_list_style', style || 'modern');
+    },
+    initTheme: function() {
+        var t = localStorage.getItem('sc_theme') || 'dark';
+        var l = localStorage.getItem('sc_list_style') || 'modern';
+        this.applyTheme(t);
+        this.applyListStyle(l);
+    },
 };
+
+document.addEventListener('DOMContentLoaded', function() { Setcord.initTheme(); });

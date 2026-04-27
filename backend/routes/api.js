@@ -3,6 +3,7 @@ const axios = require('axios');
 const router = express.Router();
 const { requireGuildAdmin } = require('../middleware/guild');
 const bot = require('../../bot/executor');
+const { requireAuth } = require('../middleware/auth');
 
 const DISCORD_API = 'https://discord.com/api/v10';
 const ADMINISTRATOR_BIT = 0x8;
@@ -58,6 +59,96 @@ router.get('/servers', async (req, res) => {
 
         return res.status(500).json({ success: false, error: 'Failed to fetch servers' });
     }
+});
+
+// ── Better Discord error parser ──
+function parseGuildEditError(err) {
+    const msg = err.message || '';
+    if (msg.includes('GUILD_RULES_CHANNEL_REQUIRED') || msg.includes('rules_channel_id'))
+        return 'Community requires a Rules Channel to be set.';
+    if (msg.includes('GUILD_PUBLIC_UPDATES_CHANNEL_REQUIRED') || msg.includes('public_updates_channel_id'))
+        return 'Community requires a Community Updates Channel to be set.';
+    if (msg.includes('COMMUNITY_CHANNELS_NOT_TEXT_OR_NEWS'))
+        return 'Rules and Updates channels must be regular text channels (not forum/stage/voice).';
+    if (msg.includes('verification_level'))
+        return 'Community requires Verification Level set to Low or higher.';
+    if (msg.includes('explicit_content_filter'))
+        return 'Community requires Explicit Content Filter set to "All Members".';
+    if (msg.includes('Missing Permissions'))
+        return 'Bot is missing permissions to edit server settings.';
+    if (msg.includes('system_channel_id'))
+        return 'System Messages channel cannot be used as both the System Channel and Rules/Updates Channel at the same time.';
+    return msg;
+}
+
+// ── Get detailed guild settings ──
+router.get('/:guildId/guild-settings', requireAuth, async (req, res) => {
+    const result = await bot.getGuildDetailed(req.params.guildId);
+    res.json(result);
+});
+
+// ── Save general settings ──
+router.patch('/:guildId/guild-settings', requireAuth, async (req, res) => {
+    try {
+        const result = await bot.editGuildGeneral(req.params.guildId, req.body);
+        if (!result.success) return res.json({ success: false, error: parseGuildEditError({ message: result.error }) });
+        res.json({ success: true });
+    } catch(e) {
+        res.json({ success: false, error: parseGuildEditError(e) });
+    }
+});
+
+// ── Enable Community (wizard) ──
+router.post('/:guildId/enable-community', requireAuth, async (req, res) => {
+    try {
+        const result = await bot.enableCommunity(req.params.guildId, req.body);
+        if (!result.success) return res.json({ success: false, error: parseGuildEditError({ message: result.error }) });
+        res.json(result);
+    } catch(e) {
+        res.json({ success: false, error: parseGuildEditError(e) });
+    }
+});
+
+// ── Disable Community ──
+router.post('/:guildId/disable-community', requireAuth, async (req, res) => {
+    try {
+        const result = await bot.disableCommunity(req.params.guildId);
+        if (!result.success) return res.json({ success: false, error: parseGuildEditError({ message: result.error }) });
+        res.json(result);
+    } catch(e) {
+        res.json({ success: false, error: parseGuildEditError(e) });
+    }
+});
+
+// ── Export ──
+router.get('/:guildId/export', requireAuth, async (req, res) => {
+    const result = await bot.exportGuildFull(req.params.guildId);
+    res.json(result);
+});
+
+// ── Import ──
+router.post('/:guildId/import', requireAuth, async (req, res) => {
+    const { structure, keepExisting } = req.body;
+    if (!structure) return res.json({ success: false, error: 'No structure provided' });
+    const result = await bot.importGuildFull(req.params.guildId, structure, keepExisting);
+    res.json(result);
+});
+
+// ── AFK Bot ──
+router.post('/:guildId/afk-bot/start', requireAuth, async (req, res) => {
+    const { channelId, duration, kickOnExpiry } = req.body;
+    if (!channelId) return res.json({ success: false, error: 'Channel ID required' });
+    const result = await bot.startAfkBot(req.params.guildId, channelId, duration || 0, kickOnExpiry || false);
+    res.json(result);
+});
+
+router.post('/:guildId/afk-bot/stop', requireAuth, async (req, res) => {
+    const result = await bot.stopAfkBot(req.params.guildId);
+    res.json(result);
+});
+
+router.get('/:guildId/afk-bot/status', requireAuth, async (req, res) => {
+    res.json({ success: true, data: bot.getAfkStatus(req.params.guildId) });
 });
 
 // ========================

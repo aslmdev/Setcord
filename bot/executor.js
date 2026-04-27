@@ -274,13 +274,14 @@ async function createChannel(guildId, channelName, channelType = 'text', parentI
         // and produces unpredictable results when mixed with category scope.
         // Instead, fetch all siblings fresh, sort them into the correct order,
         // then issue one setPositions() call with explicit slot numbers.
-        if (isTextLike && parentId) {
+        if (isTextLike) {
             try {
                 const allChannels = await guild.channels.fetch();
+                const targetParent = parentId || null;
 
-                // All channels in this category (including the new one), sorted by current rawPosition
+                // All channels in same group (category or root), sorted by current rawPosition
                 const siblings = [...allChannels.values()]
-                    .filter(ch => ch && ch.parentId === parentId)
+                    .filter(ch => ch && ch.parentId === targetParent)
                     .sort((a, b) => a.rawPosition - b.rawPosition);
 
                 const hasVoice = siblings.some(ch => isVoiceType(ch.type));
@@ -556,11 +557,388 @@ async function getGuildInfo(guildId) {
                 memberCount: guild.memberCount,
                 features: guild.features,
                 hasCommunity: guild.features.includes('COMMUNITY'),
+                verificationLevel: guild.verificationLevel,
+                explicitContentFilter: guild.explicitContentFilter,
+                defaultMessageNotifications: guild.defaultMessageNotifications,
             },
         };
     } catch (err) {
         return { success: false, error: err.message };
     }
+}
+
+async function getGuildDetailed(guildId) {
+    try {
+        const guild = await getGuild(guildId);
+        const channels = await guild.channels.fetch();
+        const voiceChannels = channels.filter(ch => ch && ch.type === 2)
+            .map(ch => ({ id: ch.id, name: ch.name }));
+        const textChannels = channels.filter(ch => ch && (ch.type === 0 || ch.type === 5))
+            .map(ch => ({ id: ch.id, name: ch.name }));
+
+        return {
+            success: true,
+            data: {
+                id: guild.id,
+                name: guild.name,
+                description: guild.description || '',
+                hasCommunity: guild.features.includes('COMMUNITY'),
+                verificationLevel: guild.verificationLevel,
+                explicitContentFilter: guild.explicitContentFilter,
+                defaultMessageNotifications: guild.defaultMessageNotifications,
+                afkChannelId: guild.afkChannelId || '',
+                afkTimeout: guild.afkTimeout || 300,
+                systemChannelId: guild.systemChannelId || '',
+                systemChannelFlags: guild.systemChannelFlags.bitfield,
+                rulesChannelId: guild.rulesChannelId || '',
+                publicUpdatesChannelId: guild.publicUpdatesChannelId || '',
+                preferredLocale: guild.preferredLocale || 'en-US',
+                voiceChannels,
+                textChannels,
+            }
+        };
+    } catch(err) {
+        return { success: false, error: err.message };
+    }
+}
+
+async function editGuild(guildId, options) {
+    try {
+        const guild = await getGuild(guildId);
+        await guild.edit(options);
+        return { success: true };
+    } catch(err) {
+        return { success: false, error: err.message };
+    }
+}
+
+async function exportGuild(guildId) {
+    try {
+        const guild = await getGuild(guildId);
+        const [channels, roles] = await Promise.all([
+            guild.channels.fetch(),
+            guild.roles.fetch()
+        ]);
+        const structure = {
+            exportedAt: new Date().toISOString(),
+            guildName: guild.name,
+            categories: [],
+            uncategorized: [],
+            roles: []
+        };
+        channels.filter(ch => ch && ch.type === 4)
+            .sort((a, b) => a.rawPosition - b.rawPosition)
+            .forEach(cat => {
+                const children = channels.filter(ch => ch && ch.parentId === cat.id)
+                    .sort((a, b) => a.rawPosition - b.rawPosition)
+                    .map(ch => ({ name: ch.name, type: ch.type }));
+                structure.categories.push({ name: cat.name, channels: children });
+            });
+        channels.filter(ch => ch && !ch.parentId && ch.type !== 4)
+            .sort((a, b) => a.rawPosition - b.rawPosition)
+            .forEach(ch => structure.uncategorized.push({ name: ch.name, type: ch.type }));
+        roles.filter(r => !r.managed && r.name !== '@everyone')
+            .sort((a, b) => b.rawPosition - a.rawPosition)
+            .forEach(r => structure.roles.push({
+                name: r.name,
+                color: r.hexColor,
+                hoist: r.hoist,
+                mentionable: r.mentionable,
+                permissions: r.permissions.bitfield.toString()
+            }));
+        return { success: true, data: structure };
+    } catch(err) {
+        return { success: false, error: err.message };
+    }
+}
+
+async function importGuild(guildId, structure) {
+    try {
+        const guild = await getGuild(guildId);
+        const log = [];
+        if (structure.roles && structure.roles.length) {
+            for (const r of structure.roles) {
+                try {
+                    await guild.roles.create({
+                        name: r.name, color: r.color || null,
+                        hoist: r.hoist || false, mentionable: r.mentionable || false,
+                        permissions: BigInt(r.permissions || '0')
+                    });
+                    log.push({ type: 'role', name: r.name, success: true });
+                } catch(e) { log.push({ type: 'role', name: r.name, success: false, error: e.message }); }
+            }
+        }
+        if (structure.uncategorized && structure.uncategorized.length) {
+            for (const ch of structure.uncategorized) {
+                try {
+                    await guild.channels.create({ name: ch.name, type: ch.type });
+                    log.push({ type: 'channel', name: ch.name, success: true });
+                } catch(e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
+            }
+        }
+        if (structure.categories && structure.categories.length) {
+            for (const cat of structure.categories) {
+                try {
+                    const newCat = await guild.channels.create({ name: cat.name, type: 4 });
+                    log.push({ type: 'category', name: cat.name, success: true });
+                    for (const ch of (cat.channels || [])) {
+                        try {
+                            await guild.channels.create({ name: ch.name, type: ch.type, parent: newCat.id });
+                            log.push({ type: 'channel', name: ch.name, success: true });
+                        } catch(e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
+                    }
+                } catch(e) { log.push({ type: 'category', name: cat.name, success: false, error: e.message }); }
+            }
+        }
+        return { success: true, log };
+    } catch(err) { return { success: false, error: err.message }; }
+}
+
+// ---- COMMUNITY ENABLER ----
+async function enableCommunity(guildId, options) {
+    try {
+        const guild = await getGuild(guildId);
+        let rulesChannelId = options.rulesChannelId;
+        let updatesChannelId = options.updatesChannelId;
+
+        if (options.createRulesChannel) {
+            const ch = await guild.channels.create({ name: options.rulesChannelName || 'rules', type: 0 });
+            rulesChannelId = ch.id;
+        }
+        if (options.createUpdatesChannel) {
+            const ch = await guild.channels.create({ name: options.updatesChannelName || 'community-updates', type: 0 });
+            updatesChannelId = ch.id;
+        }
+
+        const currentFeatures = [...(guild.features || [])];
+        if (!currentFeatures.includes('COMMUNITY')) currentFeatures.push('COMMUNITY');
+
+        await guild.edit({
+            features: currentFeatures,
+            verificationLevel: Math.max(guild.verificationLevel, 1),
+            explicitContentFilter: Math.max(guild.explicitContentFilter, 2),
+            rulesChannel: rulesChannelId,
+            publicUpdatesChannel: updatesChannelId,
+        });
+
+        return { success: true, rulesChannelId, updatesChannelId };
+    } catch(err) {
+        return { success: false, error: err.message };
+    }
+}
+
+async function disableCommunity(guildId) {
+    try {
+        const guild = await getGuild(guildId);
+        const features = (guild.features || []).filter(f => f !== 'COMMUNITY');
+        await guild.edit({ features });
+        return { success: true };
+    } catch(err) {
+        return { success: false, error: err.message };
+    }
+}
+
+// ---- GENERAL SERVER SETTINGS ----
+async function editGuildGeneral(guildId, options) {
+    try {
+        const guild = await getGuild(guildId);
+        const patch = {};
+        if (options.name) patch.name = options.name;
+        if (options.icon !== undefined) patch.icon = options.icon; // base64 data URL or null
+        if (options.description !== undefined) patch.description = options.description || null;
+        if (options.preferredLocale) patch.preferredLocale = options.preferredLocale;
+        if (options.afkChannelId !== undefined) patch.afkChannel = options.afkChannelId || null;
+        if (options.afkTimeout !== undefined) patch.afkTimeout = Number(options.afkTimeout);
+        if (options.systemChannelId !== undefined) patch.systemChannel = options.systemChannelId || null;
+        if (options.systemChannelFlags !== undefined) patch.systemChannelFlags = options.systemChannelFlags;
+        if (options.rulesChannelId !== undefined) patch.rulesChannel = options.rulesChannelId || null;
+        if (options.publicUpdatesChannelId !== undefined) patch.publicUpdatesChannel = options.publicUpdatesChannelId || null;
+        if (options.defaultMessageNotifications !== undefined) patch.defaultMessageNotifications = Number(options.defaultMessageNotifications);
+        await guild.edit(patch);
+        return { success: true };
+    } catch(err) {
+        return { success: false, error: err.message };
+    }
+}
+
+// ---- AFK BOT ----
+const { joinVoiceChannel } = require('@discordjs/voice');
+const afkSessions = new Map();
+
+async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
+    try {
+        const guild = await getGuild(guildId);
+        const channel = await guild.channels.fetch(channelId);
+        if (!channel) return { success: false, error: 'Channel not found' };
+
+        // Stop existing session first
+        await stopAfkBot(guildId);
+
+        const connection = joinVoiceChannel({
+            channelId: channel.id,
+            guildId: guild.id,
+            adapterCreator: guild.voiceAdapterCreator,
+            selfMute: true,
+            selfDeaf: true,
+        });
+
+        let timer = null;
+        if (durationSeconds && durationSeconds > 0) {
+            timer = setTimeout(async () => {
+                if (kickOnExpiry) {
+                    const ch = guild.channels.cache.get(channelId);
+                    if (ch && ch.members) {
+                        for (const [, member] of ch.members) {
+                            if (!member.user.bot) {
+                                await member.voice.disconnect().catch(() => {});
+                            }
+                        }
+                    }
+                }
+                await stopAfkBot(guildId);
+            }, durationSeconds * 1000);
+        }
+
+        afkSessions.set(guildId, { connection, timer, channelId, kickOnExpiry, startedAt: Date.now(), durationSeconds });
+        return { success: true };
+    } catch(err) {
+        return { success: false, error: err.message };
+    }
+}
+
+async function stopAfkBot(guildId) {
+    try {
+        const session = afkSessions.get(guildId);
+        if (!session) return { success: true };
+        if (session.timer) clearTimeout(session.timer);
+        try { session.connection.destroy(); } catch(e) {}
+        afkSessions.delete(guildId);
+        return { success: true };
+    } catch(err) {
+        return { success: false, error: err.message };
+    }
+}
+
+function getAfkStatus(guildId) {
+    const session = afkSessions.get(guildId);
+    if (!session) return { active: false };
+    const elapsed = Math.floor((Date.now() - session.startedAt) / 1000);
+    const remaining = session.durationSeconds > 0 ? Math.max(0, session.durationSeconds - elapsed) : -1;
+    return { active: true, channelId: session.channelId, remaining, kickOnExpiry: session.kickOnExpiry };
+}
+
+// ---- FULL EXPORT ----
+async function exportGuildFull(guildId) {
+    try {
+        const guild = await getGuild(guildId);
+        const [channels, roles] = await Promise.all([guild.channels.fetch(), guild.roles.fetch()]);
+        const structure = {
+            exportedAt: new Date().toISOString(),
+            guildName: guild.name,
+            settings: {
+                verificationLevel: guild.verificationLevel,
+                explicitContentFilter: guild.explicitContentFilter,
+                defaultMessageNotifications: guild.defaultMessageNotifications,
+                afkTimeout: guild.afkTimeout,
+                preferredLocale: guild.preferredLocale,
+                description: guild.description,
+                systemChannelFlags: guild.systemChannelFlags.bitfield,
+                hasCommunity: guild.features.includes('COMMUNITY'),
+            },
+            categories: [],
+            uncategorized: [],
+            roles: []
+        };
+        channels.filter(ch => ch && ch.type === 4).sort((a,b) => a.rawPosition - b.rawPosition).forEach(cat => {
+            const children = channels.filter(ch => ch && ch.parentId === cat.id)
+                .sort((a,b) => a.rawPosition - b.rawPosition)
+                .map(ch => ({ name: ch.name, type: ch.type }));
+            structure.categories.push({ name: cat.name, channels: children });
+        });
+        channels.filter(ch => ch && !ch.parentId && ch.type !== 4)
+            .sort((a,b) => a.rawPosition - b.rawPosition)
+            .forEach(ch => structure.uncategorized.push({ name: ch.name, type: ch.type }));
+        roles.filter(r => !r.managed && r.name !== '@everyone')
+            .sort((a,b) => b.rawPosition - a.rawPosition)
+            .forEach(r => structure.roles.push({
+                name: r.name, color: r.hexColor, hoist: r.hoist,
+                mentionable: r.mentionable, permissions: r.permissions.bitfield.toString()
+            }));
+        return { success: true, data: structure };
+    } catch(err) { return { success: false, error: err.message }; }
+}
+
+// ---- FULL IMPORT ----
+async function importGuildFull(guildId, structure, keepExisting) {
+    try {
+        const guild = await getGuild(guildId);
+        const log = [];
+
+        if (!keepExisting) {
+            // Delete all non-essential channels
+            const channels = await guild.channels.fetch();
+            for (const [, ch] of channels) {
+                if (!ch) continue;
+                try { await ch.delete(); log.push({ type: 'delete', name: ch.name, success: true }); }
+                catch(e) { log.push({ type: 'delete', name: ch.name, success: false, error: e.message }); }
+            }
+            // Delete all non-managed, non-everyone roles
+            const roles = await guild.roles.fetch();
+            for (const [, r] of roles) {
+                if (r.managed || r.name === '@everyone') continue;
+                try { await r.delete(); log.push({ type: 'delete-role', name: r.name, success: true }); }
+                catch(e) { log.push({ type: 'delete-role', name: r.name, success: false, error: e.message }); }
+            }
+        }
+
+        // Apply settings
+        if (structure.settings) {
+            try {
+                const s = structure.settings;
+                await guild.edit({
+                    verificationLevel: s.verificationLevel,
+                    explicitContentFilter: s.explicitContentFilter,
+                    defaultMessageNotifications: s.defaultMessageNotifications,
+                    afkTimeout: s.afkTimeout,
+                    preferredLocale: s.preferredLocale,
+                    description: s.description || null,
+                });
+                log.push({ type: 'settings', name: 'Server settings', success: true });
+            } catch(e) { log.push({ type: 'settings', name: 'Server settings', success: false, error: e.message }); }
+        }
+
+        // Roles
+        for (const r of (structure.roles || [])) {
+            try {
+                await guild.roles.create({ name: r.name, color: r.color || null, hoist: r.hoist || false, mentionable: r.mentionable || false, permissions: BigInt(r.permissions || '0') });
+                log.push({ type: 'role', name: r.name, success: true });
+            } catch(e) { log.push({ type: 'role', name: r.name, success: false, error: e.message }); }
+        }
+
+        // Uncategorized channels
+        for (const ch of (structure.uncategorized || [])) {
+            try {
+                await guild.channels.create({ name: ch.name, type: ch.type });
+                log.push({ type: 'channel', name: ch.name, success: true });
+            } catch(e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
+        }
+
+        // Categories + children
+        for (const cat of (structure.categories || [])) {
+            try {
+                const newCat = await guild.channels.create({ name: cat.name, type: 4 });
+                log.push({ type: 'category', name: cat.name, success: true });
+                for (const ch of (cat.channels || [])) {
+                    try {
+                        await guild.channels.create({ name: ch.name, type: ch.type, parent: newCat.id });
+                        log.push({ type: 'channel', name: ch.name, success: true });
+                    } catch(e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
+                }
+            } catch(e) { log.push({ type: 'category', name: cat.name, success: false, error: e.message }); }
+        }
+
+        return { success: true, log };
+    } catch(err) { return { success: false, error: err.message }; }
 }
 
 module.exports = {
@@ -580,4 +958,17 @@ module.exports = {
     deleteRole,
     editRole,
     reorderRoles,
+    editGuild,
+    exportGuild,
+    importGuild,
+    getGuild,
+    getGuildDetailed,
+    editGuildGeneral,
+    enableCommunity,
+    disableCommunity,
+    exportGuildFull,
+    importGuildFull,
+    startAfkBot,
+    stopAfkBot,
+    getAfkStatus,
 };

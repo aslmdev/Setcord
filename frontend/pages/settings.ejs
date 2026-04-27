@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setcord — Settings</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .settings-grid { display:flex;flex-direction:column;gap:20px;max-width:780px; }
+        .section-title { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:14px; }
+        .setting-row { display:flex;align-items:flex-start;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--border-color);gap:24px; }
+        .setting-row:last-child { border-bottom:none;padding-bottom:0; }
+        .setting-info { flex:1; }
+        .setting-label { font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:3px; }
+        .setting-desc { font-size:12px;color:var(--text-muted);line-height:1.5; }
+        .setting-control { flex-shrink:0;display:flex;align-items:center; }
+        .toggle-switch { position:relative;width:42px;height:24px; }
+        .toggle-switch input { opacity:0;width:0;height:0; }
+        .toggle-slider { position:absolute;inset:0;background:var(--bg-secondary);border-radius:24px;cursor:pointer;transition:.2s; }
+        .toggle-slider:before { content:'';position:absolute;height:18px;width:18px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s; }
+        input:checked + .toggle-slider { background:var(--accent-purple); }
+        input:checked + .toggle-slider:before { transform:translateX(18px); }
+        .setting-select { background:var(--bg-secondary);border:1px solid var(--border-color);color:var(--text-primary);border-radius:var(--radius);padding:7px 10px;font-size:13px;font-family:var(--font);min-width:180px; }
+        .setting-select:focus { outline:none;border-color:var(--accent-purple); }
+        .setting-input { background:var(--bg-secondary);border:1px solid var(--border-color);color:var(--text-primary);border-radius:var(--radius);padding:7px 10px;font-size:13px;font-family:var(--font);width:100%; }
+        .setting-input:focus { outline:none;border-color:var(--accent-purple); }
+        .setting-textarea { background:var(--bg-secondary);border:1px solid var(--border-color);color:var(--text-primary);border-radius:var(--radius);padding:8px 10px;font-size:13px;font-family:var(--font);width:100%;resize:vertical;min-height:70px;margin-top:8px; }
+        .theme-options { display:flex;gap:8px;flex-wrap:wrap; }
+        .theme-btn { padding:7px 14px;border-radius:var(--radius);font-size:12px;font-weight:600;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;transition:.15s;font-family:var(--font); }
+        .theme-btn.active { border-color:var(--accent-purple);background:rgba(124,58,237,0.15);color:var(--accent-purple); }
+        .save-fab { position:fixed;bottom:28px;right:28px;z-index:200;display:none; }
+        .save-fab button { background:var(--accent-purple);color:#fff;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.4);transition:.15s;display:flex;align-items:center;gap:8px; }
+        .save-fab button:hover { background:#6d28d9;transform:translateY(-1px); }
+        .save-fab button:disabled { opacity:.6;cursor:not-allowed;transform:none; }
+        .file-drop-zone { border:2px dashed var(--border-color);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:.15s;color:var(--text-muted);font-size:13px;width:100%; }
+        .file-drop-zone:hover,.file-drop-zone.dragover { border-color:var(--accent-purple);color:var(--accent-purple);background:rgba(124,58,237,.04); }
+        .import-log { max-height:200px;overflow-y:auto;margin-top:10px;display:flex;flex-direction:column;gap:3px; }
+        .import-log-item { font-size:12px;padding:3px 8px;border-radius:4px; }
+        .import-log-item.ok { background:rgba(34,197,94,.1);color:#4ade80; }
+        .import-log-item.fail { background:rgba(239,68,68,.1);color:#f87171; }
+        .icon-preview { width:64px;height:64px;border-radius:14px;object-fit:cover;border:2px solid var(--border-color); }
+        .icon-placeholder { width:64px;height:64px;border-radius:14px;background:var(--accent-purple);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;border:2px solid var(--border-color); }
+        .community-wizard-overlay { position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center; }
+        .community-wizard-box { background:var(--bg-card);border:1px solid var(--border-color);border-radius:16px;padding:28px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto; }
+        .wizard-title { font-size:18px;font-weight:700;margin-bottom:6px; }
+        .wizard-desc { font-size:13px;color:var(--text-muted);margin-bottom:20px; }
+        .wizard-section { margin-bottom:18px; }
+        .wizard-section-label { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px; }
+        .wizard-radio-group { display:flex;gap:8px;margin-bottom:10px; }
+        .wizard-radio-btn { flex:1;padding:8px;border:1px solid var(--border-color);border-radius:var(--radius);cursor:pointer;font-size:12px;font-weight:600;text-align:center;transition:.15s;background:var(--bg-secondary);color:var(--text-primary);font-family:var(--font); }
+        .wizard-radio-btn.active { border-color:var(--accent-purple);background:rgba(124,58,237,.15);color:var(--accent-purple); }
+        .wizard-actions { display:flex;gap:8px;justify-content:flex-end;margin-top:20px; }
+        .afk-status-bar { background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);border-radius:var(--radius);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px; }
+        .afk-timer { font-size:20px;font-weight:700;color:var(--accent-purple);font-family:monospace; }
+        .checkbox-row { display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--border-color);border-radius:var(--radius);cursor:pointer;transition:.15s; }
+        .checkbox-row:hover { border-color:var(--accent-purple); }
+        .checkbox-row input[type=checkbox] { margin-top:2px;accent-color:var(--accent-purple);flex-shrink:0; }
+        .not-recommended { font-size:10px;font-weight:700;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:1px 5px;display:inline-block;margin-left:6px; }
+    </style>
+</head>
+<body>
+<div class="app-layout" id="app-layout">
+    <%- include('../components/sidebar', { guild, activePage: 'settings' }) %>
+    <main class="main-content">
+        <%- include('../components/header', { title: 'Server Settings', subtitle: 'General · Community · AFK Bot · Export & Import · Appearance', guildId: guild.id }) %>
+
+        <div id="settings-loading" style="padding:40px 0;color:var(--text-muted);font-size:13px;">
+            <div class="loading-spinner">Loading settings…</div>
+        </div>
+
+        <div id="settings-grid" class="settings-grid" style="display:none;">
+
+            <!-- APPEARANCE -->
+            <div class="card">
+                <div class="section-title">Dashboard Appearance</div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Theme</div><div class="setting-desc">Saved to your browser only</div></div>
+                    <div class="setting-control"><div class="theme-options">
+                        <button class="theme-btn" id="theme-dark" onclick="setTheme('dark')">🌙 Dark</button>
+                        <button class="theme-btn" id="theme-light" onclick="setTheme('light')">☀️ Light</button>
+                    </div></div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Channel List Style</div><div class="setting-desc">How channels look in the Channel Manager</div></div>
+                    <div class="setting-control"><div class="theme-options">
+                        <button class="theme-btn" id="list-modern" onclick="setListStyle('modern')">Modern</button>
+                        <button class="theme-btn" id="list-discord" onclick="setListStyle('discord')">Discord</button>
+                        <button class="theme-btn" id="list-compact" onclick="setListStyle('compact')">Compact</button>
+                    </div></div>
+                </div>
+            </div>
+
+            <!-- GENERAL SERVER SETTINGS -->
+            <div class="card">
+                <div class="section-title">General</div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Server Icon</div><div class="setting-desc">Click the icon to upload a new one</div></div>
+                    <div class="setting-control" style="gap:12px;">
+                        <div id="icon-preview-wrap" style="cursor:pointer;" onclick="document.getElementById('icon-file').click()"></div>
+                        <input type="file" id="icon-file" accept="image/*" style="display:none" onchange="onIconSelected(this)">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Server Name</div><div class="setting-desc">2–100 characters</div></div>
+                    <div class="setting-control"><input type="text" class="setting-input" id="guild-name" maxlength="100" style="min-width:200px;" oninput="markDirty()"></div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Server Description</div><div class="setting-desc">Shown on Discovery (Community servers only)</div></div>
+                </div>
+                <textarea class="setting-textarea" id="server-description" placeholder="Describe your server…" maxlength="120" oninput="markDirty()"></textarea>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="desc-counter">0 / 120</div>
+            </div>
+
+            <!-- CHANNELS & NOTIFICATIONS -->
+            <div class="card">
+                <div class="section-title">Channels & Notifications</div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">System Messages Channel</div><div class="setting-desc">Where join messages and boost messages are sent</div></div>
+                    <div class="setting-control"><select class="setting-select" id="system-channel" onchange="markDirty()"><option value="">None</option></select></div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Send Welcome Messages</div><div class="setting-desc">Post when a new member joins</div></div>
+                    <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="toggle-join-msg" onchange="markDirty()"><span class="toggle-slider"></span></label></div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Send Boost Messages</div><div class="setting-desc">Post when a member boosts the server</div></div>
+                    <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="toggle-boost-msg" onchange="markDirty()"><span class="toggle-slider"></span></label></div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Default Notification Setting</div><div class="setting-desc">What new members default to</div></div>
+                    <div class="setting-control"><select class="setting-select" id="default-notifs" onchange="markDirty()"><option value="0">All messages</option><option value="1">Only @mentions</option></select></div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Server Language</div><div class="setting-desc">Primary language for this server</div></div>
+                    <div class="setting-control">
+                        <select class="setting-select" id="preferred-locale" onchange="markDirty()">
+                            <option value="en-US">English (US)</option>
+                            <option value="en-GB">English (UK)</option>
+                            <option value="ar">Arabic</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="hi">Hindi</option>
+                            <option value="it">Italian</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ko">Korean</option>
+                            <option value="pl">Polish</option>
+                            <option value="pt-BR">Portuguese (Brazil)</option>
+                            <option value="ru">Russian</option>
+                            <option value="es-ES">Spanish</option>
+                            <option value="tr">Turkish</option>
+                            <option value="zh-CN">Chinese (Simplified)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMMUNITY -->
+            <div class="card">
+                <div class="section-title">Community</div>
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <div class="setting-label">Community Server</div>
+                        <div class="setting-desc">Enables announcements, stage channels, member screening, onboarding, and server discovery. Requires a Rules channel and a Community Updates channel.</div>
+                    </div>
+                    <div class="setting-control">
+                        <button class="btn btn-primary btn-sm" id="community-btn" onclick="handleCommunityToggle()">Enable Community</button>
+                    </div>
+                </div>
+                <div id="community-channels-section" style="display:none;">
+                    <div class="setting-row">
+                        <div class="setting-info"><div class="setting-label">Rules Channel</div><div class="setting-desc">Shown to new members (required)</div></div>
+                        <div class="setting-control"><select class="setting-select" id="rules-channel" onchange="markDirty()"><option value="">None</option></select></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info"><div class="setting-label">Community Updates Channel</div><div class="setting-desc">Where Discord sends program updates (required)</div></div>
+                        <div class="setting-control"><select class="setting-select" id="updates-channel" onchange="markDirty()"><option value="">None</option></select></div>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <button class="btn btn-primary btn-sm" onclick="saveCommunityChannels()">Save Community Channels</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AFK -->
+            <div class="card">
+                <div class="section-title">AFK Voice Channel</div>
+                <div id="afk-status-wrap" style="display:none;">
+                    <div class="afk-status-bar">
+                        <div>
+                            <div style="font-size:12px;font-weight:700;color:var(--accent-purple);margin-bottom:2px;">🤖 Bot is active in AFK channel</div>
+                            <div style="font-size:11px;color:var(--text-muted);">Time remaining: <span id="afk-timer-label">∞</span></div>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="stopAfkBot()">Stop Bot</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Voice Channel</div><div class="setting-desc">Bot will join this channel, muted and deafened</div></div>
+                    <div class="setting-control"><select class="setting-select" id="afk-bot-channel"><option value="">Select channel…</option></select></div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Duration</div><div class="setting-desc">How long the bot stays — choose Indefinite to keep it until you manually stop it</div></div>
+                    <div class="setting-control">
+                        <select class="setting-select" id="afk-bot-duration">
+                            <option value="0">Indefinite</option>
+                            <option value="1800">30 minutes</option>
+                            <option value="3600">1 hour</option>
+                            <option value="7200">2 hours</option>
+                            <option value="14400">4 hours</option>
+                            <option value="28800">8 hours</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Kick Members on Expiry</div><div class="setting-desc">When the duration ends, disconnect all non-bot members from the channel</div></div>
+                    <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="afk-kick-toggle"><span class="toggle-slider"></span></label></div>
+                </div>
+                <div style="margin-top:4px;">
+                    <button class="btn btn-primary" onclick="startAfkBot()">🤖 Start AFK Bot</button>
+                </div>
+            </div>
+
+            <!-- EXPORT / IMPORT -->
+            <div class="card">
+                <div class="section-title">Export / Import</div>
+                <div class="setting-row">
+                    <div class="setting-info"><div class="setting-label">Export Server Structure</div><div class="setting-desc">Downloads all categories, channels, roles, and settings as a JSON file</div></div>
+                    <div class="setting-control"><button class="btn btn-primary" onclick="exportStructure()">⬇ Export JSON</button></div>
+                </div>
+                <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px;">
+                    <div class="setting-info">
+                        <div class="setting-label">Import Server Structure</div>
+                        <div class="setting-desc">Apply a previously exported JSON. Server settings from the file are always applied.</div>
+                    </div>
+                    <div class="file-drop-zone" id="drop-zone" onclick="document.getElementById('import-file').click()">
+                        📂 Click or drag a .json export file here
+                        <input type="file" id="import-file" accept=".json" style="display:none" onchange="onFileSelected(this)">
+                    </div>
+                    <div id="import-preview" style="display:none;width:100%;">
+                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;" id="import-preview-label"></div>
+                        <label class="checkbox-row" style="margin-bottom:10px;">
+                            <input type="checkbox" id="keep-existing-check">
+                            <div>
+                                <div style="font-size:13px;font-weight:600;">Keep existing channels & roles <span class="not-recommended">NOT RECOMMENDED</span></div>
+                                <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">By default the bot will delete all current channels and roles then import fresh ones. Check this to keep your existing channels and roles and add the imported ones on top instead.</div>
+                            </div>
+                        </label>
+                        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="runImport()">⬆ Import to This Server</button>
+                    </div>
+                    <div id="import-log" class="import-log" style="display:none;width:100%;"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="save-fab" id="save-fab">
+            <button id="save-btn" onclick="saveSettings()">💾 Save Changes</button>
+        </div>
+    </main>
+</div>
+
+<!-- Community Wizard Modal -->
+<div id="community-wizard" class="community-wizard-overlay" style="display:none;">
+    <div class="community-wizard-box">
+        <div class="wizard-title">🌐 Enable Community Server</div>
+        <div class="wizard-desc">Community requires a Rules channel and a Community Updates channel. Choose to create new ones or use existing channels.</div>
+
+        <div class="wizard-section">
+            <div class="wizard-section-label">Rules Channel</div>
+            <div class="wizard-radio-group">
+                <button class="wizard-radio-btn active" id="rules-opt-new" onclick="setWizardOpt('rules','new')">➕ Create New</button>
+                <button class="wizard-radio-btn" id="rules-opt-existing" onclick="setWizardOpt('rules','existing')">📋 Use Existing</button>
+            </div>
+            <input type="text" class="setting-input" id="wizard-rules-name" placeholder="Channel name (e.g. rules)" value="rules" style="display:block;">
+            <select class="setting-select" id="wizard-rules-existing" style="display:none;width:100%;"></select>
+        </div>
+
+        <div class="wizard-section">
+            <div class="wizard-section-label">Community Updates Channel</div>
+            <div class="wizard-radio-group">
+                <button class="wizard-radio-btn active" id="updates-opt-new" onclick="setWizardOpt('updates','new')">➕ Create New</button>
+                <button class="wizard-radio-btn" id="updates-opt-existing" onclick="setWizardOpt('updates','existing')">📋 Use Existing</button>
+            </div>
+            <input type="text" class="setting-input" id="wizard-updates-name" placeholder="Channel name (e.g. community-updates)" value="community-updates" style="display:block;">
+            <select class="setting-select" id="wizard-updates-existing" style="display:none;width:100%;"></select>
+        </div>
+
+        <div class="wizard-actions">
+            <button class="btn btn-ghost" onclick="closeWizard()">Cancel</button>
+            <button class="btn btn-primary" id="wizard-confirm-btn" onclick="confirmEnableCommunity()">Enable Community</button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/setcord.js"></script>
+<script>
+    var GUILD_ID = '<%= guild.id %>';
+    var guildData = null;
+    var isDirty = false;
+    var importData = null;
+    var iconBase64 = null;
+    var afkTimerInterval = null;
+    var wizardRulesMode = 'new';
+    var wizardUpdatesMode = 'new';
+
+    // ---- APPEARANCE ----
+    function setTheme(t) {
+        Setcord.applyTheme(t);
+        document.querySelectorAll('.theme-btn[id^="theme-"]').forEach(function(b){b.classList.remove('active');});
+        var btn = document.getElementById('theme-'+t); if(btn) btn.classList.add('active');
+    }
+    function setListStyle(s) {
+        Setcord.applyListStyle(s);
+        document.querySelectorAll('.theme-btn[id^="list-"]').forEach(function(b){b.classList.remove('active');});
+        var btn = document.getElementById('list-'+s); if(btn) btn.classList.add('active');
+    }
+    function syncActiveButtons() {
+        var t = localStorage.getItem('sc_theme')||'dark';
+        var l = localStorage.getItem('sc_list_style')||'modern';
+        var tb = document.getElementById('theme-'+t); if(tb) tb.classList.add('active');
+        var lb = document.getElementById('list-'+l); if(lb) lb.classList.add('active');
+    }
+
+    // ---- DIRTY ----
+    function markDirty() {
+        isDirty = true;
+        document.getElementById('save-fab').style.display = 'block';
+        var d = document.getElementById('server-description');
+        if(d) document.getElementById('desc-counter').textContent = d.value.length+' / 120';
+    }
+
+    // ---- LOAD ----
+    function loadSettings() {
+        document.getElementById('settings-loading').style.display = 'block';
+        document.getElementById('settings-grid').style.display = 'none';
+
+        Setcord.apiFetch('/api/'+GUILD_ID+'/guild-settings', {}, 'Loading settings…')
+            .then(function(r){return r.json();})
+            .then(function(res){
+                if(!res.success){Setcord.showToast('Failed: '+res.error,'error');return;}
+                guildData = res.data;
+                applyToUI(guildData);
+                document.getElementById('settings-loading').style.display = 'none';
+                document.getElementById('settings-grid').style.display = 'flex';
+                syncActiveButtons();
+                loadAfkStatus();
+            }).catch(function(){Setcord.showToast('Failed to load settings','error');});
+    }
+
+    function applyToUI(d) {
+        // General
+        document.getElementById('guild-name').value = d.name || '';
+        document.getElementById('server-description').value = d.description || '';
+        document.getElementById('desc-counter').textContent = (d.description||'').length+' / 120';
+
+        // Icon preview
+        var wrap = document.getElementById('icon-preview-wrap');
+        if(d.icon) {
+            wrap.innerHTML = '<img class="icon-preview" src="'+d.icon+'" alt="" title="Click to change">';
+        } else {
+            wrap.innerHTML = '<div class="icon-placeholder" title="Click to upload">'+(d.name||'S').charAt(0).toUpperCase()+'</div>';
+        }
+
+        // Notifications
+        var flags = d.systemChannelFlags || 0;
+        document.getElementById('toggle-join-msg').checked = !(flags & 1);
+        document.getElementById('toggle-boost-msg').checked = !(flags & 2);
+        document.getElementById('default-notifs').value = d.defaultMessageNotifications || 0;
+        document.getElementById('preferred-locale').value = d.preferredLocale || 'en-US';
+
+        // Community
+        var hasCom = d.hasCommunity;
+        var comBtn = document.getElementById('community-btn');
+        comBtn.textContent = hasCom ? 'Disable Community' : 'Enable Community';
+        comBtn.className = hasCom ? 'btn btn-danger btn-sm' : 'btn btn-primary btn-sm';
+        document.getElementById('community-channels-section').style.display = hasCom ? 'block' : 'none';
+
+        // Populate channel dropdowns
+        var sysSel = document.getElementById('system-channel');
+        var rulesSel = document.getElementById('rules-channel');
+        var updatesSel = document.getElementById('updates-channel');
+        var afkSel = document.getElementById('afk-bot-channel');
+        var wizRulesEx = document.getElementById('wizard-rules-existing');
+        var wizUpdatesEx = document.getElementById('wizard-updates-existing');
+
+        [sysSel, rulesSel, updatesSel].forEach(function(sel){
+            sel.innerHTML = '<option value="">None</option>';
+            (d.textChannels||[]).forEach(function(ch){
+                sel.innerHTML += '<option value="'+ch.id+'"># '+ch.name+'</option>';
+            });
+        });
+        [wizRulesEx, wizUpdatesEx].forEach(function(sel){
+            sel.innerHTML = '<option value="">Select…</option>';
+            (d.textChannels||[]).forEach(function(ch){
+                sel.innerHTML += '<option value="'+ch.id+'"># '+ch.name+'</option>';
+            });
+        });
+
+        afkSel.innerHTML = '<option value="">Select channel…</option>';
+        (d.voiceChannels||[]).forEach(function(ch){
+            afkSel.innerHTML += '<option value="'+ch.id+'">🔊 '+ch.name+'</option>';
+        });
+
+        if(d.systemChannelId) sysSel.value = d.systemChannelId;
+        if(d.rulesChannelId) rulesSel.value = d.rulesChannelId;
+        if(d.publicUpdatesChannelId) updatesSel.value = d.publicUpdatesChannelId;
+
+        isDirty = false;
+        document.getElementById('save-fab').style.display = 'none';
+    }
+
+    // ---- SAVE GENERAL ----
+    function saveSettings() {
+        var btn = document.getElementById('save-btn');
+        btn.disabled = true; btn.textContent = 'Saving…';
+
+        var joinChecked = document.getElementById('toggle-join-msg').checked;
+        var boostChecked = document.getElementById('toggle-boost-msg').checked;
+        var flags = 0;
+        if(!joinChecked) flags |= 1;
+        if(!boostChecked) flags |= 2;
+
+        var payload = {
+            name: document.getElementById('guild-name').value.trim(),
+            description: document.getElementById('server-description').value.trim(),
+            defaultMessageNotifications: parseInt(document.getElementById('default-notifs').value),
+            systemChannelId: document.getElementById('system-channel').value || null,
+            systemChannelFlags: flags,
+            preferredLocale: document.getElementById('preferred-locale').value,
+        };
+
+        if(iconBase64) payload.icon = iconBase64;
+
+        Setcord.apiFetch('/api/'+GUILD_ID+'/guild-settings', {
+            method:'PATCH', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+        }, 'Saving settings…')
+        .then(function(r){return r.json();})
+        .then(function(data){
+            if(data.success){
+                Setcord.showToast('Settings saved!','success');
+                iconBase64 = null;
+                isDirty = false;
+                document.getElementById('save-fab').style.display = 'none';
+                loadSettings();
+            } else {
+                Setcord.showToast('Error: '+(data.error||'Unknown'),'error',6000);
+            }
+        }).catch(function(){Setcord.showToast('Save failed','error');})
+        .finally(function(){btn.disabled=false;btn.textContent='💾 Save Changes';});
+    }
+
+    // ---- SAVE COMMUNITY CHANNELS ----
+    function saveCommunityChannels() {
+        var payload = {
+            rulesChannelId: document.getElementById('rules-channel').value || null,
+            publicUpdatesChannelId: document.getElementById('updates-channel').value || null,
+        };
+        Setcord.apiFetch('/api/'+GUILD_ID+'/guild-settings', {
+            method:'PATCH', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+        }, 'Saving…')
+        .then(function(r){return r.json();})
+        .then(function(data){
+            if(data.success) Setcord.showToast('Community channels saved!','success');
+            else Setcord.showToast('Error: '+(data.error||'Unknown'),'error',6000);
+        });
+    }
+
+    // ---- COMMUNITY WIZARD ----
+    function handleCommunityToggle() {
+        if(guildData && guildData.hasCommunity) {
+            Setcord.showConfirmModal({
+                title:'Disable Community',
+                desc:'This will remove Community features from your server including stage channels, announcements, and member screening.',
+                confirmText:'Disable',
+                onConfirm: function(){
+                    Setcord.apiFetch('/api/'+GUILD_ID+'/disable-community', {method:'POST'}, 'Disabling community…')
+                    .then(function(r){return r.json();})
+                    .then(function(data){
+                        if(data.success){Setcord.showToast('Community disabled','success');loadSettings();}
+                        else Setcord.showToast('Error: '+(data.error||'Unknown'),'error',6000);
+                    });
+                }
+            });
+        } else {
+            document.getElementById('community-wizard').style.display = 'flex';
+        }
+    }
+
+    function closeWizard() { document.getElementById('community-wizard').style.display = 'none'; }
+
+    function setWizardOpt(which, mode) {
+        if(which === 'rules') {
+            wizardRulesMode = mode;
+            document.getElementById('rules-opt-new').className = 'wizard-radio-btn'+(mode==='new'?' active':'');
+            document.getElementById('rules-opt-existing').className = 'wizard-radio-btn'+(mode==='existing'?' active':'');
+            document.getElementById('wizard-rules-name').style.display = mode==='new' ? 'block' : 'none';
+            document.getElementById('wizard-rules-existing').style.display = mode==='existing' ? 'block' : 'none';
+        } else {
+            wizardUpdatesMode = mode;
+            document.getElementById('updates-opt-new').className = 'wizard-radio-btn'+(mode==='new'?' active':'');
+            document.getElementById('updates-opt-existing').className = 'wizard-radio-btn'+(mode==='existing'?' active':'');
+            document.getElementById('wizard-updates-name').style.display = mode==='new' ? 'block' : 'none';
+            document.getElementById('wizard-updates-existing').style.display = mode==='existing' ? 'block' : 'none';
+        }
+    }
+
+    function confirmEnableCommunity() {
+        var btn = document.getElementById('wizard-confirm-btn');
+        btn.disabled = true; btn.textContent = 'Enabling…';
+
+        var payload = {
+            createRulesChannel: wizardRulesMode === 'new',
+            rulesChannelName: document.getElementById('wizard-rules-name').value.trim() || 'rules',
+            rulesChannelId: wizardRulesMode === 'existing' ? document.getElementById('wizard-rules-existing').value : null,
+            createUpdatesChannel: wizardUpdatesMode === 'new',
+            updatesChannelName: document.getElementById('wizard-updates-name').value.trim() || 'community-updates',
+            updatesChannelId: wizardUpdatesMode === 'existing' ? document.getElementById('wizard-updates-existing').value : null,
+        };
+
+        Setcord.apiFetch('/api/'+GUILD_ID+'/enable-community', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+        }, 'Enabling community…')
+        .then(function(r){return r.json();})
+        .then(function(data){
+            if(data.success){
+                closeWizard();
+                Setcord.showToast('Community enabled!','success');
+                loadSettings();
+            } else {
+                Setcord.showToast('Error: '+(data.error||'Unknown'),'error',6000);
+            }
+        }).catch(function(){Setcord.showToast('Failed','error');})
+        .finally(function(){btn.disabled=false;btn.textContent='Enable Community';});
+    }
+
+    // ---- ICON ----
+    function onIconSelected(input) {
+        var file = input.files[0];
+        if(!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            iconBase64 = e.target.result;
+            var wrap = document.getElementById('icon-preview-wrap');
+            wrap.innerHTML = '<img class="icon-preview" src="'+iconBase64+'" alt="">';
+            markDirty();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ---- AFK BOT ----
+    function loadAfkStatus() {
+        fetch('/api/'+GUILD_ID+'/afk-bot/status')
+            .then(function(r){return r.json();})
+            .then(function(data){
+                if(data.success && data.data.active){
+                    showAfkStatus(data.data);
+                } else {
+                    document.getElementById('afk-status-wrap').style.display = 'none';
+                    if(afkTimerInterval){clearInterval(afkTimerInterval);afkTimerInterval=null;}
+                }
+            });
+    }
+
+    function showAfkStatus(status) {
+        document.getElementById('afk-status-wrap').style.display = 'block';
+        if(afkTimerInterval) clearInterval(afkTimerInterval);
+        var remaining = status.remaining;
+        function updateLabel() {
+            var label = document.getElementById('afk-timer-label');
+            if(!label) return;
+            if(remaining <= 0 || remaining === -1) { label.textContent = '∞'; return; }
+            var h = Math.floor(remaining/3600), m = Math.floor((remaining%3600)/60), s = remaining%60;
+            label.textContent = (h>0?h+'h ':'')+m+'m '+s+'s';
+            remaining--;
+        }
+        updateLabel();
+        if(remaining > 0) afkTimerInterval = setInterval(updateLabel, 1000);
+    }
+
+    function startAfkBot() {
+        var channelId = document.getElementById('afk-bot-channel').value;
+        if(!channelId){Setcord.showToast('Select a voice channel first','warning');return;}
+        var duration = parseInt(document.getElementById('afk-bot-duration').value)||0;
+        var kick = document.getElementById('afk-kick-toggle').checked;
+
+        Setcord.apiFetch('/api/'+GUILD_ID+'/afk-bot/start', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({channelId,duration,kickOnExpiry:kick})
+        }, 'Joining voice channel…')
+        .then(function(r){return r.json();})
+        .then(function(data){
+            if(data.success){
+                Setcord.showToast('Bot joined the channel!','success');
+                loadAfkStatus();
+            } else {
+                Setcord.showToast('Error: '+(data.error||'Unknown'),'error',5000);
+            }
+        });
+    }
+
+    function stopAfkBot() {
+        Setcord.apiFetch('/api/'+GUILD_ID+'/afk-bot/stop', {method:'POST'}, 'Stopping bot…')
+        .then(function(r){return r.json();})
+        .then(function(data){
+            if(data.success){
+                Setcord.showToast('Bot stopped','success');
+                document.getElementById('afk-status-wrap').style.display = 'none';
+                if(afkTimerInterval){clearInterval(afkTimerInterval);afkTimerInterval=null;}
+            } else {
+                Setcord.showToast('Error: '+(data.error||'Unknown'),'error');
+            }
+        });
+    }
+
+    // ---- EXPORT ----
+    function exportStructure() {
+        Setcord.apiFetch('/api/'+GUILD_ID+'/export', {}, 'Exporting…')
+        .then(function(r){return r.json();})
+        .then(function(data){
+            if(!data.success){Setcord.showToast('Export failed: '+data.error,'error');return;}
+            var blob = new Blob([JSON.stringify(data.data,null,2)],{type:'application/json'});
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'setcord-'+GUILD_ID+'-'+Date.now()+'.json';
+            a.click();
+            Setcord.showToast('Exported!','success');
+        });
+    }
+
+    // ---- IMPORT ----
+    var dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover',function(e){e.preventDefault();dropZone.classList.add('dragover');});
+    dropZone.addEventListener('dragleave',function(){dropZone.classList.remove('dragover');});
+    dropZone.addEventListener('drop',function(e){e.preventDefault();dropZone.classList.remove('dragover');if(e.dataTransfer.files[0])readImportFile(e.dataTransfer.files[0]);});
+    function onFileSelected(input){if(input.files[0])readImportFile(input.files[0]);}
+    function readImportFile(file){
+        var reader = new FileReader();
+        reader.onload = function(e){
+            try {
+                importData = JSON.parse(e.target.result);
+                var cats = (importData.categories||[]).length;
+                var chs = (importData.uncategorized||[]).length+(importData.categories||[]).reduce(function(a,c){return a+(c.channels||[]).length;},0);
+                var roles = (importData.roles||[]).length;
+                document.getElementById('import-preview-label').textContent =
+                    'Ready: '+cats+' categories, '+chs+' channels, '+roles+' roles from "'+( importData.guildName||'unknown')+'"'+(importData.settings?' + server settings':'');
+                document.getElementById('import-preview').style.display = 'block';
+                document.getElementById('import-log').style.display = 'none';
+                document.getElementById('import-log').innerHTML = '';
+            } catch(err){Setcord.showToast('Invalid JSON file','error');}
+        };
+        reader.readAsText(file);
+    }
+    function runImport(){
+        if(!importData) return;
+        var keepExisting = document.getElementById('keep-existing-check').checked;
+        var desc = keepExisting
+            ? 'Will apply settings from the file and add imported channels/roles ON TOP of existing ones.'
+            : '⚠️ Will DELETE all current channels and roles, then import fresh ones. Server settings will also be updated. This cannot be undone.';
+        Setcord.showConfirmModal({
+            title: keepExisting ? 'Import Structure' : '⚠️ Reset & Import',
+            desc: desc,
+            confirmText: keepExisting ? 'Import' : 'Reset & Import',
+            onConfirm: function(){
+                document.getElementById('import-preview').style.display = 'none';
+                Setcord.apiFetch('/api/'+GUILD_ID+'/import', {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({structure:importData, keepExisting:keepExisting})
+                }, 'Importing…')
+                .then(function(r){return r.json();})
+                .then(function(data){
+                    var log = document.getElementById('import-log');
+                    log.style.display='flex';log.innerHTML='';
+                    if(!data.success){log.innerHTML='<div class="import-log-item fail">Failed: '+(data.error||'unknown')+'</div>';return;}
+                    (data.log||[]).forEach(function(entry){
+                        var div = document.createElement('div');
+                        div.className='import-log-item '+(entry.success?'ok':'fail');
+                        div.textContent=(entry.success?'✓':'✕')+' ['+entry.type+'] '+entry.name+(entry.error?' — '+entry.error:'');
+                        log.appendChild(div);
+                    });
+                    var ok=(data.log||[]).filter(function(l){return l.success;}).length;
+                    var fail=(data.log||[]).filter(function(l){return !l.success;}).length;
+                    Setcord.showToast(ok+' applied'+(fail?', '+fail+' failed':''),fail?'warning':'success');
+                });
+            }
+        });
+    }
+
+    window.addEventListener('beforeunload',function(e){if(isDirty){e.preventDefault();e.returnValue='';}});
+    document.addEventListener('DOMContentLoaded',function(){loadSettings();});
+</script>
+</body>
+</html>

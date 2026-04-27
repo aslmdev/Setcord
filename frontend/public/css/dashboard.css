@@ -4,6 +4,54 @@
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
+/* ---- Light theme ---- */
+body.theme-light {
+    --bg-primary: #f2f3f5;
+    --bg-secondary: #e3e5e8;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f2f3f5;
+    --text-primary: #060607;
+    --text-secondary: #4e5058;
+    --text-muted: #80848e;
+    --border-color: rgba(0,0,0,0.08);
+    --sidebar-bg: #e3e5e8;
+    --sidebar-text: #2e3035;
+    --sidebar-hover: rgba(0,0,0,0.06);
+}
+
+/* ---- Channel list: Discord style ---- */
+body.list-discord .channel-item {
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    padding: 1px 8px;
+    font-size: 14px;
+}
+body.list-discord .channel-item:hover {
+    background: rgba(255,255,255,0.06);
+}
+body.list-discord .category-header {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border: none;
+    background: transparent;
+    padding: 16px 0 4px 0;
+}
+
+/* ---- Channel list: Compact style ---- */
+body.list-compact .channel-item {
+    padding: 4px 10px;
+    font-size: 12px;
+    min-height: unset;
+}
+body.list-compact .category-header {
+    padding: 6px 0;
+    font-size: 11px;
+}
+
 :root {
     --bg-primary: #080812;
     --bg-secondary: #0e0e1c;

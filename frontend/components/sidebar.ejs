@@ -3,13 +3,17 @@
     <div class="sidebar-header">
         <% if (guild.icon) { %>
             <img src="<%= guild.icon %>" alt="">
-        <% } else { %>
-            <div class="server-initial"><%= guild.name.charAt(0).toUpperCase() %></div>
-        <% } %>
-        <div class="sidebar-header-text">
-            <h3><%= guild.name %></h3>
-            <span>Setcord Panel</span>
-        </div>
+            <% } else { %>
+                <div class="server-initial">
+                    <%= guild.name.charAt(0).toUpperCase() %>
+                </div>
+                <% } %>
+                    <div class="sidebar-header-text">
+                        <h3>
+                            <%= guild.name %>
+                        </h3>
+                        <span>Setcord Panel</span>
+                    </div>
     </div>
 
     <!-- Test Mode Banner (injected by JS when active) -->
@@ -35,6 +39,9 @@
         <a href="/dashboard/<%= guild.id %>/setup" class="<%= activePage === 'setup' ? 'active' : '' %>">
             <span class="nav-icon">⚡</span> Fast Setup
         </a>
+        <a href="/dashboard/<%= guild.id %>/settings" class="nav-link <%= activePage === 'settings' ? 'active' : '' %>">
+            ⚙️ Settings
+        </a>
         <div style="height:1px; background:var(--border-color); margin: 8px 12px;"></div>
         <a href="#" class="disabled">
             <span class="nav-icon">📊</span> Analytics
@@ -44,9 +51,6 @@
         </a>
         <a href="#" class="disabled">
             <span class="nav-icon">🤖</span> AI Setup
-        </a>
-        <a href="#" class="disabled">
-            <span class="nav-icon">⚙️</span> Settings
         </a>
     </nav>
 
