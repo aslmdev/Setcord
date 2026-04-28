@@ -9,48 +9,136 @@ body.theme-light {
     --bg-primary: #f2f3f5;
     --bg-secondary: #e3e5e8;
     --bg-card: #ffffff;
-    --bg-card-hover: #f2f3f5;
+    --bg-card-hover: #eef0f2;
+    --bg-input: #e3e5e8;
+    --bg-sidebar: #e3e5e8;
     --text-primary: #060607;
     --text-secondary: #4e5058;
-    --text-muted: #80848e;
-    --border-color: rgba(0,0,0,0.08);
-    --sidebar-bg: #e3e5e8;
-    --sidebar-text: #2e3035;
-    --sidebar-hover: rgba(0,0,0,0.06);
+    --text-muted: #747f8d;
+    --border-color: rgba(0,0,0,0.09);
+    --shadow: 0 2px 8px rgba(0,0,0,0.09);
+    --shadow-purple: 0 0 20px rgba(124,58,237,0.15);
+    --accent-purple-glow: rgba(124,58,237,0.12);
 }
+
+/* Light sidebar explicit overrides */
+body.theme-light .sidebar { background: #e3e5e8; border-right-color: rgba(0,0,0,0.1); }
+body.theme-light .sidebar-header { border-bottom-color: rgba(0,0,0,0.1); background: #dfe1e5; }
+body.theme-light .sidebar-header-text h3 { color: #060607; }
+body.theme-light .sidebar-header-text span { color: var(--accent-purple); }
+body.theme-light .sidebar-nav a { color: #4e5058; }
+body.theme-light .sidebar-nav a:hover { color: #060607; background: rgba(0,0,0,0.06); }
+body.theme-light .sidebar-nav a.active { color: var(--accent-purple); background: rgba(124,58,237,0.1); border-left-color: var(--accent-purple); }
+body.theme-light .sidebar-bottom { border-top-color: rgba(0,0,0,0.1); }
+body.theme-light .sidebar-bottom a { color: #80848e; }
+body.theme-light .sidebar-bottom a:hover { color: #060607; }
+body.theme-light #test-mode-btn { background: #fff; border-color: rgba(0,0,0,0.12); color: #4e5058; }
+
+/* Light channel/role items */
+body.theme-light .channel-item { background: rgba(0,0,0,0.04); border-color: transparent; }
+body.theme-light .channel-item:hover { background: rgba(0,0,0,0.07); }
+body.theme-light .channel-name { color: #4e5058; }
+body.theme-light .channel-icon { color: #80848e; }
+body.theme-light .drag-handle { color: #80848e; }
+body.theme-light .category-name { color: #747f8d; }
+body.theme-light .role-item { background: rgba(0,0,0,0.04); border-color: transparent; }
+body.theme-light .role-item:hover { background: rgba(0,0,0,0.07); }
+body.theme-light .role-count { background: rgba(0,0,0,0.06); color: #747f8d; }
+
+/* Light cards/inputs */
+body.theme-light .card { box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+body.theme-light .form-input { background: #fff; border-color: rgba(0,0,0,0.14); color: #060607; }
+body.theme-light .form-input::placeholder { color: #80848e; }
+body.theme-light .inline-form { background: #f0f1f3; border-color: rgba(0,0,0,0.09); }
+body.theme-light .modal-box { background: #fff; }
+body.theme-light .page-topbar { background: #f2f3f5; }
+body.theme-light .emoji-picker { background: #e3e5e8; }
+body.theme-light .emoji-search { background: #fff; color: #060607; }
+body.theme-light .role-item.selected { background: rgba(124,58,237,0.1); }
 
 /* ---- Channel list: Discord style ---- */
 body.list-discord .channel-item {
     border: none;
     border-radius: 4px;
     background: transparent;
-    padding: 1px 8px;
+    padding: 2px 8px;
     font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 1px;
 }
 body.list-discord .channel-item:hover {
     background: rgba(255,255,255,0.06);
+    color: var(--text-primary);
 }
+body.theme-light body.list-discord .channel-item:hover { background: rgba(0,0,0,0.06); }
+body.list-discord .channel-icon { color: var(--text-muted); }
+body.list-discord .channel-name { font-size: 14px; font-weight: 500; }
 body.list-discord .category-header {
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-muted);
     border: none;
     background: transparent;
-    padding: 16px 0 4px 0;
+    padding: 18px 4px 4px 0;
+    cursor: pointer;
 }
+body.list-discord .category-section { margin-bottom: 4px; }
 
 /* ---- Channel list: Compact style ---- */
 body.list-compact .channel-item {
-    padding: 4px 10px;
+    padding: 3px 8px;
     font-size: 12px;
     min-height: unset;
+    margin-bottom: 1px;
+    background: transparent;
+    border-color: transparent;
 }
-body.list-compact .category-header {
-    padding: 6px 0;
-    font-size: 11px;
+body.list-compact .channel-item:hover { background: var(--bg-card-hover); }
+body.list-compact .category-header { padding: 4px 0; font-size: 10px; letter-spacing: 0.08em; }
+body.list-compact .channel-name { font-size: 12px; }
+
+/* ---- Channel list: Cards style ---- */
+body.list-cards .channel-item {
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin-bottom: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+    transition: all 0.18s;
 }
+body.list-cards .channel-item:hover {
+    border-color: rgba(124,58,237,0.5);
+    box-shadow: 0 4px 16px rgba(124,58,237,0.18);
+    transform: translateX(2px);
+}
+body.list-cards .channel-name { font-size: 14px; font-weight: 600; }
+body.list-cards .category-header {
+    background: rgba(124,58,237,0.06);
+    border: 1px solid rgba(124,58,237,0.15);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+}
+body.list-cards .category-name { font-size: 11px; letter-spacing: 0.08em; }
+
+/* ---- Channel list: Minimal style ---- */
+body.list-minimal .channel-item {
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 8px;
+    margin-bottom: 1px;
+    box-shadow: none;
+}
+body.list-minimal .channel-item:hover { background: rgba(124,58,237,0.07); }
+body.list-minimal .channel-icon { opacity: 0.55; }
+body.list-minimal .channel-name { font-size: 13px; color: var(--text-secondary); }
+body.list-minimal .channel-item:hover .channel-name { color: var(--text-primary); }
+body.list-minimal .category-header { border: none; background: none; padding: 14px 0 2px 0; }
+body.list-minimal .category-name { font-size: 10px; letter-spacing: 0.1em; opacity: 0.6; }
 
 :root {
     --bg-primary: #080812;

@@ -92,6 +92,9 @@ router.patch('/:guildId/guild-settings', requireAuth, async (req, res) => {
     try {
         const result = await bot.editGuildGeneral(req.params.guildId, req.body);
         if (!result.success) return res.json({ success: false, error: parseGuildEditError({ message: result.error }) });
+        // Clear the server-list cache so icon/name changes appear immediately on /servers
+        req.session.serversCache = null;
+        req.session.serversCacheTime = 0;
         res.json({ success: true });
     } catch(e) {
         res.json({ success: false, error: parseGuildEditError(e) });
@@ -138,6 +141,8 @@ router.post('/:guildId/import', requireAuth, async (req, res) => {
 router.post('/:guildId/afk-bot/start', requireAuth, async (req, res) => {
     const { channelId, duration, kickOnExpiry } = req.body;
     if (!channelId) return res.json({ success: false, error: 'Channel ID required' });
+    // Give enough time for voice connection to establish (up to 15s)
+    res.setTimeout(15000);
     const result = await bot.startAfkBot(req.params.guildId, channelId, duration || 0, kickOnExpiry || false);
     res.json(result);
 });

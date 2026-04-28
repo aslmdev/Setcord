@@ -4,6 +4,7 @@ const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildVoiceStates,
     ],
     rest: {
         timeout: 30000,
@@ -581,6 +582,7 @@ async function getGuildDetailed(guildId) {
             data: {
                 id: guild.id,
                 name: guild.name,
+                icon: guild.iconURL({ size: 128 }) || null,
                 description: guild.description || '',
                 hasCommunity: guild.features.includes('COMMUNITY'),
                 verificationLevel: guild.verificationLevel,
@@ -762,16 +764,27 @@ async function editGuildGeneral(guildId, options) {
 }
 
 // ---- AFK BOT ----
-const { joinVoiceChannel } = require('@discordjs/voice');
+const { joinVoiceChannel, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
 const afkSessions = new Map();
 
-async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
+// Detect when bot is kicked/leaves a voice channel and clean up AFK session
+client.on(Events.VoiceStateUpdate, (oldState, newState) => {
+    if (!client.user || oldState.member?.id !== client.user.id) return;
+    // Bot left a channel (channelId went from something to null or different)
+    if (!oldState.channelId || newState.channelId === oldState.channelId) return;
+    const guildId = oldState.guild.id;
+    const session = afkSessions.get(guildId);
+    if (session && session.channelId === oldState.channelId) {
+        if (session.timer) clearTimeout(session.timer);
+        try { session.connection.destroy(); } catch(e) {}
+        afkSessions.delete(guildId);
+        console.log(`[BOasync function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
     try {
         const guild = await getGuild(guildId);
         const channel = await guild.channels.fetch(channelId);
         if (!channel) return { success: false, error: 'Channel not found' };
 
-        // Stop existing session first
+        // Stop any existing session first
         await stopAfkBot(guildId);
 
         const connection = joinVoiceChannel({
@@ -800,8 +813,13 @@ async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
         }
 
         afkSessions.set(guildId, { connection, timer, channelId, kickOnExpiry, startedAt: Date.now(), durationSeconds });
+        console.log(`[BOT] AFK session started for ${guildId} in channel ${channelId}`);
         return { success: true };
     } catch(err) {
+        console.error('[BOT] startAfkBot error:', err);
+        return { success: false, error: err.message };
+    }
+}error:', err);
         return { success: false, error: err.message };
     }
 }
@@ -822,6 +840,16 @@ async function stopAfkBot(guildId) {
 function getAfkStatus(guildId) {
     const session = afkSessions.get(guildId);
     if (!session) return { active: false };
+    // Verify bot is still physically in the voice channel
+    const guild = client.guilds.cache.get(guildId);
+    const botVoiceChannelId = guild?.members?.me?.voice?.channelId;
+    if (!botVoiceChannelId || botVoiceChannelId !== session.channelId) {
+        // Bot is gone — clean up silently
+        if (session.timer) clearTimeout(session.timer);
+        try { session.connection.destroy(); } catch(e) {}
+        afkSessions.delete(guildId);
+        return { active: false };
+    }
     const elapsed = Math.floor((Date.now() - session.startedAt) / 1000);
     const remaining = session.durationSeconds > 0 ? Math.max(0, session.durationSeconds - elapsed) : -1;
     return { active: true, channelId: session.channelId, remaining, kickOnExpiry: session.kickOnExpiry };

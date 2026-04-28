@@ -22,6 +22,17 @@
             --font: 'DM Sans', sans-serif;
             --font-mono: 'DM Mono', monospace;
         }
+        body.theme-light {
+            --bg: #f2f3f5;
+            --card: #ffffff;
+            --card-hover: #f2f3f5;
+            --border: rgba(0,0,0,0.1);
+            --text: #060607;
+            --muted: #80848e;
+        }
+        body.theme-light .topnav { background: rgba(240,241,243,0.95); border-bottom-color: rgba(0,0,0,0.1); }
+        body.theme-light .server-card { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        body.theme-light .logout-btn { color: var(--muted); border-color: rgba(0,0,0,0.15); }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -255,6 +266,19 @@
         }
         .refresh-btn:hover { background: #6d28d9; }
     </style>
+    <script>
+        // Apply saved theme before first paint to avoid flash
+        (function() {
+            var t = localStorage.getItem('sc_theme');
+            if (t && t !== 'dark') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.body.classList.add('theme-' + t);
+                });
+                // Also add to html for very early paint
+                document.documentElement.setAttribute('data-theme', t);
+            }
+        })();
+    </script>
 </head>
 <body>
     <nav class="topnav">

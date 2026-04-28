@@ -580,7 +580,7 @@ window.Setcord = {
         localStorage.setItem('sc_theme', theme || 'dark');
     },
     applyListStyle: function(style) {
-        document.body.classList.remove('list-modern', 'list-discord', 'list-compact');
+        document.body.classList.remove('list-modern', 'list-discord', 'list-compact', 'list-cards', 'list-minimal');
         if (style && style !== 'modern') document.body.classList.add('list-' + style);
         localStorage.setItem('sc_list_style', style || 'modern');
     },

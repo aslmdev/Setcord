@@ -55,6 +55,20 @@
     </nav>
 
     <div class="sidebar-bottom">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 0 12px 0;border-bottom:1px solid var(--border-color);margin-bottom:8px;">
+            <div style="width:30px;height:30px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--accent-purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">
+                <% if (typeof user !== 'undefined' && user && user.avatar) { %>
+                    <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.<%= user.avatar.startsWith('a_') ? 'gif' : 'webp' %>?size=64" alt="" style="width:100%;height:100%;object-fit:cover;">
+                <% } else if (typeof user !== 'undefined' && user) { %>
+                    <%= (user.globalName || user.username || '?').charAt(0).toUpperCase() %>
+                <% } else { %>
+                    ?
+                <% } %>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">
+                <% if (typeof user !== 'undefined' && user) { %><%= user.globalName || user.username %><% } %>
+            </span>
+        </div>
         <a href="/servers">
             <span>←</span> Switch Server
         </a>

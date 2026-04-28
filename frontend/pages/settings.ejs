@@ -28,10 +28,13 @@
         .theme-options { display:flex;gap:8px;flex-wrap:wrap; }
         .theme-btn { padding:7px 14px;border-radius:var(--radius);font-size:12px;font-weight:600;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;transition:.15s;font-family:var(--font); }
         .theme-btn.active { border-color:var(--accent-purple);background:rgba(124,58,237,0.15);color:var(--accent-purple); }
-        .save-fab { position:fixed;bottom:28px;right:28px;z-index:200;display:none; }
-        .save-fab button { background:var(--accent-purple);color:#fff;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.4);transition:.15s;display:flex;align-items:center;gap:8px; }
-        .save-fab button:hover { background:#6d28d9;transform:translateY(-1px); }
-        .save-fab button:disabled { opacity:.6;cursor:not-allowed;transform:none; }
+        .save-fab { position:fixed;bottom:28px;right:28px;z-index:200;display:none;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:14px;padding:10px 14px;box-shadow:0 8px 32px rgba(0,0,0,.5); }
+        .save-fab button { border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px; }
+        .save-fab #save-btn { background:var(--accent-purple);color:#fff;box-shadow:0 2px 12px rgba(124,58,237,.35); }
+        .save-fab #save-btn:hover { background:#6d28d9;transform:translateY(-1px); }
+        .save-fab #save-btn:disabled { opacity:.6;cursor:not-allowed;transform:none; }
+        .save-fab #discard-btn { background:transparent;color:var(--text-secondary);border:1px solid var(--border-color); }
+        .save-fab #discard-btn:hover { color:var(--text-primary);border-color:var(--text-muted); }
         .file-drop-zone { border:2px dashed var(--border-color);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:.15s;color:var(--text-muted);font-size:13px;width:100%; }
         .file-drop-zone:hover,.file-drop-zone.dragover { border-color:var(--accent-purple);color:var(--accent-purple);background:rgba(124,58,237,.04); }
         .import-log { max-height:200px;overflow-y:auto;margin-top:10px;display:flex;flex-direction:column;gap:3px; }
@@ -54,6 +57,23 @@
         .afk-timer { font-size:20px;font-weight:700;color:var(--accent-purple);font-family:monospace; }
         .checkbox-row { display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--border-color);border-radius:var(--radius);cursor:pointer;transition:.15s; }
         .checkbox-row:hover { border-color:var(--accent-purple); }
+        .list-style-picker { display:flex;gap:10px;flex-wrap:wrap;margin-top:4px; }
+        .lsp-card { flex:0 0 130px;border:2px solid var(--border-color);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .2s;user-select:none; }
+        .lsp-card:hover { border-color:var(--accent-purple);transform:translateY(-2px);box-shadow:0 6px 20px rgba(124,58,237,.2); }
+        .lsp-card.active { border-color:var(--accent-purple);box-shadow:0 0 0 1px var(--accent-purple); }
+        .lsp-preview { padding:10px 8px;background:#0d0d1f;height:100px;overflow:hidden; }
+        .lsp-cat { font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#4a4a6a;padding-left:2px;margin:6px 0 3px; }
+        .lsp-cat:first-child { margin-top:0; }
+        .lsp-ch { font-size:9px;display:flex;align-items:center;gap:3px;padding:2px 4px;border-radius:3px;margin-bottom:2px;color:#6868a0; }
+        .lsp-ch span { font-size:9px;color:#4a4a6a; }
+        /* Modern preview */ .lsp-modern .lsp-ch { background:#0e0e1c;border:1px solid #1c1c3a;border-radius:4px; }
+        /* Discord preview */ .lsp-discord .lsp-ch { background:transparent;border-radius:3px;padding:2px 6px; } .lsp-discord .lsp-ch:hover { background:rgba(255,255,255,.06); }
+        /* Compact preview */ .lsp-compact .lsp-ch { padding:1px 4px;font-size:8px;margin-bottom:1px; } .lsp-compact .lsp-cat { font-size:6px;margin:4px 0 1px; }
+        /* Cards preview */ .lsp-cards .lsp-ch { background:#13132a;border:1px solid #1c1c3a;border-radius:5px;padding:4px 6px;margin-bottom:3px; } .lsp-cards .lsp-cat { background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.18);border-radius:4px;padding:2px 5px;color:#a78bfa; }
+        /* Minimal preview */ .lsp-minimal .lsp-ch { background:transparent;padding:2px 4px;border-radius:2px; } .lsp-minimal .lsp-cat { font-size:6px;opacity:.5; }
+        .lsp-footer { padding:7px 9px;display:flex;align-items:center;justify-content:space-between; }
+        .lsp-name { font-size:11px;font-weight:700;color:var(--text-primary); }
+        .lsp-badge { font-size:9px;color:var(--accent-purple);background:rgba(124,58,237,.12);border-radius:3px;padding:1px 4px; }
         .checkbox-row input[type=checkbox] { margin-top:2px;accent-color:var(--accent-purple);flex-shrink:0; }
         .not-recommended { font-size:10px;font-weight:700;color:#f59e0b;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:1px 5px;display:inline-block;margin-left:6px; }
     </style>
@@ -80,13 +100,70 @@
                         <button class="theme-btn" id="theme-light" onclick="setTheme('light')">☀️ Light</button>
                     </div></div>
                 </div>
-                <div class="setting-row">
-                    <div class="setting-info"><div class="setting-label">Channel List Style</div><div class="setting-desc">How channels look in the Channel Manager</div></div>
-                    <div class="setting-control"><div class="theme-options">
-                        <button class="theme-btn" id="list-modern" onclick="setListStyle('modern')">Modern</button>
-                        <button class="theme-btn" id="list-discord" onclick="setListStyle('discord')">Discord</button>
-                        <button class="theme-btn" id="list-compact" onclick="setListStyle('compact')">Compact</button>
-                    </div></div>
+                <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:12px;">
+                    <div class="setting-info"><div class="setting-label">Channel List Style</div><div class="setting-desc">How channels look in the Channel Manager &amp; Roles page</div></div>
+                    <div class="list-style-picker" id="list-style-picker">
+
+                        <div class="lsp-card" id="lsp-modern" onclick="setListStyle('modern')">
+                            <div class="lsp-preview lsp-modern">
+                                <div class="lsp-cat">▸ General</div>
+                                <div class="lsp-ch"><span>#</span> general-chat</div>
+                                <div class="lsp-ch"><span>#</span> announcements</div>
+                                <div class="lsp-ch"><span>🔊</span> Music</div>
+                                <div class="lsp-cat">▸ Community</div>
+                                <div class="lsp-ch"><span>#</span> off-topic</div>
+                            </div>
+                            <div class="lsp-footer"><span class="lsp-name">Modern</span></div>
+                        </div>
+
+                        <div class="lsp-card" id="lsp-discord" onclick="setListStyle('discord')">
+                            <div class="lsp-preview lsp-discord">
+                                <div class="lsp-cat">▸ General</div>
+                                <div class="lsp-ch"><span>#</span> general-chat</div>
+                                <div class="lsp-ch"><span>#</span> announcements</div>
+                                <div class="lsp-ch"><span>🔊</span> Music</div>
+                                <div class="lsp-cat">▸ Community</div>
+                                <div class="lsp-ch"><span>#</span> off-topic</div>
+                            </div>
+                            <div class="lsp-footer"><span class="lsp-name">Discord</span><span class="lsp-badge">↗ Native</span></div>
+                        </div>
+
+                        <div class="lsp-card" id="lsp-compact" onclick="setListStyle('compact')">
+                            <div class="lsp-preview lsp-compact">
+                                <div class="lsp-cat">▸ General</div>
+                                <div class="lsp-ch"><span>#</span> general-chat</div>
+                                <div class="lsp-ch"><span>#</span> announcements</div>
+                                <div class="lsp-ch"><span>🔊</span> Music Voice</div>
+                                <div class="lsp-cat">▸ Community</div>
+                                <div class="lsp-ch"><span>#</span> off-topic</div>
+                                <div class="lsp-ch"><span>#</span> media</div>
+                            </div>
+                            <div class="lsp-footer"><span class="lsp-name">Compact</span></div>
+                        </div>
+
+                        <div class="lsp-card" id="lsp-cards" onclick="setListStyle('cards')">
+                            <div class="lsp-preview lsp-cards">
+                                <div class="lsp-cat">▸ General</div>
+                                <div class="lsp-ch"><span>#</span> general-chat</div>
+                                <div class="lsp-ch"><span>#</span> announcements</div>
+                                <div class="lsp-ch"><span>🔊</span> Music</div>
+                            </div>
+                            <div class="lsp-footer"><span class="lsp-name">Cards</span><span class="lsp-badge">✦ Rich</span></div>
+                        </div>
+
+                        <div class="lsp-card" id="lsp-minimal" onclick="setListStyle('minimal')">
+                            <div class="lsp-preview lsp-minimal">
+                                <div class="lsp-cat">General</div>
+                                <div class="lsp-ch"><span>#</span> general-chat</div>
+                                <div class="lsp-ch"><span>#</span> announcements</div>
+                                <div class="lsp-ch"><span>🔊</span> Music</div>
+                                <div class="lsp-cat">Community</div>
+                                <div class="lsp-ch"><span>#</span> off-topic</div>
+                            </div>
+                            <div class="lsp-footer"><span class="lsp-name">Minimal</span></div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
 
@@ -195,12 +272,12 @@
                 </div>
                 <div class="setting-row">
                     <div class="setting-info"><div class="setting-label">Voice Channel</div><div class="setting-desc">Bot will join this channel, muted and deafened</div></div>
-                    <div class="setting-control"><select class="setting-select" id="afk-bot-channel"><option value="">Select channel…</option></select></div>
+                    <div class="setting-control"><select class="setting-select" id="afk-bot-channel" onchange="markAfkDirty()"><option value="">Select channel…</option></select></div>
                 </div>
                 <div class="setting-row">
                     <div class="setting-info"><div class="setting-label">Duration</div><div class="setting-desc">How long the bot stays — choose Indefinite to keep it until you manually stop it</div></div>
                     <div class="setting-control">
-                        <select class="setting-select" id="afk-bot-duration">
+                        <select class="setting-select" id="afk-bot-duration" onchange="markAfkDirty()">
                             <option value="0">Indefinite</option>
                             <option value="1800">30 minutes</option>
                             <option value="3600">1 hour</option>
@@ -212,10 +289,10 @@
                 </div>
                 <div class="setting-row">
                     <div class="setting-info"><div class="setting-label">Kick Members on Expiry</div><div class="setting-desc">When the duration ends, disconnect all non-bot members from the channel</div></div>
-                    <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="afk-kick-toggle"><span class="toggle-slider"></span></label></div>
+                    <div class="setting-control"><label class="toggle-switch"><input type="checkbox" id="afk-kick-toggle" onchange="markAfkDirty()"><span class="toggle-slider"></span></label></div>
                 </div>
-                <div style="margin-top:4px;">
-                    <button class="btn btn-primary" onclick="startAfkBot()">🤖 Start AFK Bot</button>
+                <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+                    <button class="btn btn-primary" id="afk-action-btn" onclick="afkActionClick()">🤖 Start AFK Bot</button>
                 </div>
             </div>
 
@@ -253,6 +330,7 @@
         </div>
 
         <div class="save-fab" id="save-fab">
+            <button id="discard-btn" onclick="discardChanges()">↩ Discard All</button>
             <button id="save-btn" onclick="saveSettings()">💾 Save Changes</button>
         </div>
     </main>
@@ -296,9 +374,11 @@
     var GUILD_ID = '<%= guild.id %>';
     var guildData = null;
     var isDirty = false;
+    var isAfkDirty = false;
     var importData = null;
     var iconBase64 = null;
     var afkTimerInterval = null;
+    var afkStatusInterval = null;
     var wizardRulesMode = 'new';
     var wizardUpdatesMode = 'new';
 
@@ -310,22 +390,36 @@
     }
     function setListStyle(s) {
         Setcord.applyListStyle(s);
-        document.querySelectorAll('.theme-btn[id^="list-"]').forEach(function(b){b.classList.remove('active');});
-        var btn = document.getElementById('list-'+s); if(btn) btn.classList.add('active');
+        document.querySelectorAll('[id^="lsp-"]').forEach(function(c){c.classList.remove('active');});
+        var card = document.getElementById('lsp-'+s); if(card) card.classList.add('active');
     }
     function syncActiveButtons() {
         var t = localStorage.getItem('sc_theme')||'dark';
         var l = localStorage.getItem('sc_list_style')||'modern';
         var tb = document.getElementById('theme-'+t); if(tb) tb.classList.add('active');
-        var lb = document.getElementById('list-'+l); if(lb) lb.classList.add('active');
+        document.querySelectorAll('[id^="lsp-"]').forEach(function(c){c.classList.remove('active');});
+        var lc = document.getElementById('lsp-'+l); if(lc) lc.classList.add('active');
     }
 
     // ---- DIRTY ----
     function markDirty() {
         isDirty = true;
-        document.getElementById('save-fab').style.display = 'block';
+        document.getElementById('save-fab').style.display = 'flex';
         var d = document.getElementById('server-description');
         if(d) document.getElementById('desc-counter').textContent = d.value.length+' / 120';
+    }
+
+    function markAfkDirty() {
+        isAfkDirty = true;
+        document.getElementById('save-fab').style.display = 'flex';
+    }
+
+    function discardChanges() {
+        isDirty = false;
+        isAfkDirty = false;
+        iconBase64 = null;
+        document.getElementById('save-fab').style.display = 'none';
+        loadSettings();
     }
 
     // ---- LOAD ----
@@ -413,40 +507,79 @@
         var btn = document.getElementById('save-btn');
         btn.disabled = true; btn.textContent = 'Saving…';
 
-        var joinChecked = document.getElementById('toggle-join-msg').checked;
-        var boostChecked = document.getElementById('toggle-boost-msg').checked;
-        var flags = 0;
-        if(!joinChecked) flags |= 1;
-        if(!boostChecked) flags |= 2;
+        // If only AFK is dirty and guild is not, skip guild save
+        var doGuildSave = isDirty;
+        var doAfkStart = isAfkDirty;
 
-        var payload = {
-            name: document.getElementById('guild-name').value.trim(),
-            description: document.getElementById('server-description').value.trim(),
-            defaultMessageNotifications: parseInt(document.getElementById('default-notifs').value),
-            systemChannelId: document.getElementById('system-channel').value || null,
-            systemChannelFlags: flags,
-            preferredLocale: document.getElementById('preferred-locale').value,
-        };
-
-        if(iconBase64) payload.icon = iconBase64;
-
-        Setcord.apiFetch('/api/'+GUILD_ID+'/guild-settings', {
-            method:'PATCH', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(payload)
-        }, 'Saving settings…')
-        .then(function(r){return r.json();})
-        .then(function(data){
-            if(data.success){
+        Promise.resolve()
+        .then(function() {
+            if (!doGuildSave) return Promise.resolve({ success: true, _skip: true });
+            var joinChecked = document.getElementById('toggle-join-msg').checked;
+            var boostChecked = document.getElementById('toggle-boost-msg').checked;
+            var flags = 0;
+            if(!joinChecked) flags |= 1;
+            if(!boostChecked) flags |= 2;
+            var payload = {
+                name: document.getElementById('guild-name').value.trim(),
+                description: document.getElementById('server-description').value.trim(),
+                defaultMessageNotifications: parseInt(document.getElementById('default-notifs').value),
+                systemChannelId: document.getElementById('system-channel').value || null,
+                systemChannelFlags: flags,
+                preferredLocale: document.getElementById('preferred-locale').value,
+            };
+            if(iconBase64) payload.icon = iconBase64;
+            return Setcord.apiFetch('/api/'+GUILD_ID+'/guild-settings', {
+                method:'PATCH', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(payload)
+            }, 'Saving settings…').then(function(r){return r.json();});
+        })
+        .then(function(data) {
+            if (!data._skip) {
+                if (!data.success) {
+                    Setcord.showToast('Error: '+(data.error||'Unknown'),'error',6000);
+                    btn.disabled=false; btn.textContent='💾 Save Changes';
+                    return;
+                }
                 Setcord.showToast('Settings saved!','success');
                 iconBase64 = null;
                 isDirty = false;
-                document.getElementById('save-fab').style.display = 'none';
-                loadSettings();
-            } else {
-                Setcord.showToast('Error: '+(data.error||'Unknown'),'error',6000);
             }
-        }).catch(function(){Setcord.showToast('Save failed','error');})
-        .finally(function(){btn.disabled=false;btn.textContent='💾 Save Changes';});
+            if (!doAfkStart) {
+                document.getElementById('save-fab').style.display = 'none';
+                if (doGuildSave) loadSettings();
+                btn.disabled=false; btn.textContent='💾 Save Changes';
+                return;
+            }
+            // Start AFK bot
+            var channelId = document.getElementById('afk-bot-channel').value;
+            if (!channelId) {
+                Setcord.showToast('Select a voice channel first','warning');
+                btn.disabled=false; btn.textContent='💾 Save Changes';
+                return;
+            }
+            var duration = parseInt(document.getElementById('afk-bot-duration').value)||0;
+            var kick = document.getElementById('afk-kick-toggle').checked;
+            return Setcord.apiFetch('/api/'+GUILD_ID+'/afk-bot/start', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({channelId:channelId,duration:duration,kickOnExpiry:kick})
+            }, 'Joining voice channel…').then(function(r){return r.json();})
+            .then(function(afkData) {
+                if(afkData.success) {
+                    Setcord.showToast('AFK Bot started!','success');
+                    isAfkDirty = false;
+                    loadAfkStatus();
+                } else {
+                    Setcord.showToast('AFK Error: '+(afkData.error||'Unknown'),'error',5000);
+                }
+                document.getElementById('save-fab').style.display = 'none';
+                if (doGuildSave) loadSettings();
+                btn.disabled=false; btn.textContent='💾 Save Changes';
+            });
+        })
+        .catch(function(){
+            Setcord.showToast('Save failed','error');
+            btn.disabled=false; btn.textContent='💾 Save Changes';
+        });
     }
 
     // ---- SAVE COMMUNITY CHANNELS ----
@@ -550,15 +683,58 @@
     }
 
     // ---- AFK BOT ----
+    // Direct action button: Start or Stop based on current state
+    function afkActionClick() {
+        var wrap = document.getElementById('afk-status-wrap');
+        var isActive = wrap && wrap.style.display !== 'none';
+        if (isActive) {
+            stopAfkBot();
+        } else {
+            var channelId = document.getElementById('afk-bot-channel').value;
+            if (!channelId) { Setcord.showToast('Select a voice channel first','warning'); return; }
+            var duration = parseInt(document.getElementById('afk-bot-duration').value)||0;
+            var kick = document.getElementById('afk-kick-toggle').checked;
+            Setcord.apiFetch('/api/'+GUILD_ID+'/afk-bot/start', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({channelId:channelId,duration:duration,kickOnExpiry:kick})
+            }, 'Joining voice channel…').then(function(r){return r.json();})
+            .then(function(data){
+                if(data.success){
+                    Setcord.showToast('Bot joined the channel!','success');
+                    isAfkDirty = false;
+                    document.getElementById('save-fab').style.display = 'none';
+                    loadAfkStatus();
+                } else {
+                    Setcord.showToast('Error: '+(data.error||'Unknown'),'error',5000);
+                }
+            });
+        }
+    }
+
+    function _setAfkBtnActive(active) {
+        var btn = document.getElementById('afk-action-btn');
+        if (!btn) return;
+        if (active) {
+            btn.textContent = '⛔ Stop Bot';
+            btn.className = 'btn btn-danger';
+        } else {
+            btn.textContent = '🤖 Start AFK Bot';
+            btn.className = 'btn btn-primary';
+        }
+    }
+
     function loadAfkStatus() {
         fetch('/api/'+GUILD_ID+'/afk-bot/status')
             .then(function(r){return r.json();})
             .then(function(data){
                 if(data.success && data.data.active){
                     showAfkStatus(data.data);
+                    _setAfkBtnActive(true);
                 } else {
                     document.getElementById('afk-status-wrap').style.display = 'none';
                     if(afkTimerInterval){clearInterval(afkTimerInterval);afkTimerInterval=null;}
+                    if(afkStatusInterval){clearInterval(afkStatusInterval);afkStatusInterval=null;}
+                    _setAfkBtnActive(false);
                 }
             });
     }
@@ -566,6 +742,7 @@
     function showAfkStatus(status) {
         document.getElementById('afk-status-wrap').style.display = 'block';
         if(afkTimerInterval) clearInterval(afkTimerInterval);
+        if(afkStatusInterval) clearInterval(afkStatusInterval);
         var remaining = status.remaining;
         function updateLabel() {
             var label = document.getElementById('afk-timer-label');
@@ -577,6 +754,8 @@
         }
         updateLabel();
         if(remaining > 0) afkTimerInterval = setInterval(updateLabel, 1000);
+        // Poll server every 30 s to confirm bot is still in voice
+        afkStatusInterval = setInterval(function() { loadAfkStatus(); }, 30000);
     }
 
     function startAfkBot() {
@@ -608,6 +787,8 @@
                 Setcord.showToast('Bot stopped','success');
                 document.getElementById('afk-status-wrap').style.display = 'none';
                 if(afkTimerInterval){clearInterval(afkTimerInterval);afkTimerInterval=null;}
+                if(afkStatusInterval){clearInterval(afkStatusInterval);afkStatusInterval=null;}
+                _setAfkBtnActive(false);
             } else {
                 Setcord.showToast('Error: '+(data.error||'Unknown'),'error');
             }
@@ -687,7 +868,7 @@
         });
     }
 
-    window.addEventListener('beforeunload',function(e){if(isDirty){e.preventDefault();e.returnValue='';}});
+    window.addEventListener('beforeunload',function(e){if(isDirty||isAfkDirty){e.preventDefault();e.returnValue='';}});
     document.addEventListener('DOMContentLoaded',function(){loadSettings();});
 </script>
 </body>
