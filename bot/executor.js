@@ -599,7 +599,7 @@ async function getGuildDetailed(guildId) {
                 textChannels,
             }
         };
-    } catch(err) {
+    } catch (err) {
         return { success: false, error: err.message };
     }
 }
@@ -609,7 +609,7 @@ async function editGuild(guildId, options) {
         const guild = await getGuild(guildId);
         await guild.edit(options);
         return { success: true };
-    } catch(err) {
+    } catch (err) {
         return { success: false, error: err.message };
     }
 }
@@ -649,7 +649,7 @@ async function exportGuild(guildId) {
                 permissions: r.permissions.bitfield.toString()
             }));
         return { success: true, data: structure };
-    } catch(err) {
+    } catch (err) {
         return { success: false, error: err.message };
     }
 }
@@ -667,7 +667,7 @@ async function importGuild(guildId, structure) {
                         permissions: BigInt(r.permissions || '0')
                     });
                     log.push({ type: 'role', name: r.name, success: true });
-                } catch(e) { log.push({ type: 'role', name: r.name, success: false, error: e.message }); }
+                } catch (e) { log.push({ type: 'role', name: r.name, success: false, error: e.message }); }
             }
         }
         if (structure.uncategorized && structure.uncategorized.length) {
@@ -675,7 +675,7 @@ async function importGuild(guildId, structure) {
                 try {
                     await guild.channels.create({ name: ch.name, type: ch.type });
                     log.push({ type: 'channel', name: ch.name, success: true });
-                } catch(e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
+                } catch (e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
             }
         }
         if (structure.categories && structure.categories.length) {
@@ -687,13 +687,13 @@ async function importGuild(guildId, structure) {
                         try {
                             await guild.channels.create({ name: ch.name, type: ch.type, parent: newCat.id });
                             log.push({ type: 'channel', name: ch.name, success: true });
-                        } catch(e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
+                        } catch (e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
                     }
-                } catch(e) { log.push({ type: 'category', name: cat.name, success: false, error: e.message }); }
+                } catch (e) { log.push({ type: 'category', name: cat.name, success: false, error: e.message }); }
             }
         }
         return { success: true, log };
-    } catch(err) { return { success: false, error: err.message }; }
+    } catch (err) { return { success: false, error: err.message }; }
 }
 
 // ---- COMMUNITY ENABLER ----
@@ -724,7 +724,7 @@ async function enableCommunity(guildId, options) {
         });
 
         return { success: true, rulesChannelId, updatesChannelId };
-    } catch(err) {
+    } catch (err) {
         return { success: false, error: err.message };
     }
 }
@@ -735,7 +735,7 @@ async function disableCommunity(guildId) {
         const features = (guild.features || []).filter(f => f !== 'COMMUNITY');
         await guild.edit({ features });
         return { success: true };
-    } catch(err) {
+    } catch (err) {
         return { success: false, error: err.message };
     }
 }
@@ -758,7 +758,7 @@ async function editGuildGeneral(guildId, options) {
         if (options.defaultMessageNotifications !== undefined) patch.defaultMessageNotifications = Number(options.defaultMessageNotifications);
         await guild.edit(patch);
         return { success: true };
-    } catch(err) {
+    } catch (err) {
         return { success: false, error: err.message };
     }
 }
@@ -776,9 +776,13 @@ client.on(Events.VoiceStateUpdate, (oldState, newState) => {
     const session = afkSessions.get(guildId);
     if (session && session.channelId === oldState.channelId) {
         if (session.timer) clearTimeout(session.timer);
-        try { session.connection.destroy(); } catch(e) {}
+        try { session.connection.destroy(); } catch (e) { }
         afkSessions.delete(guildId);
-        console.log(`[BOasync function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
+        console.log(`[BOT] AFK session ended (bot disconnected) in ${guildId}`);
+    }
+});
+
+async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
     try {
         const guild = await getGuild(guildId);
         const channel = await guild.channels.fetch(channelId);
@@ -803,7 +807,7 @@ client.on(Events.VoiceStateUpdate, (oldState, newState) => {
                     if (ch && ch.members) {
                         for (const [, member] of ch.members) {
                             if (!member.user.bot) {
-                                await member.voice.disconnect().catch(() => {});
+                                await member.voice.disconnect().catch(() => { });
                             }
                         }
                     }
@@ -815,11 +819,8 @@ client.on(Events.VoiceStateUpdate, (oldState, newState) => {
         afkSessions.set(guildId, { connection, timer, channelId, kickOnExpiry, startedAt: Date.now(), durationSeconds });
         console.log(`[BOT] AFK session started for ${guildId} in channel ${channelId}`);
         return { success: true };
-    } catch(err) {
+    } catch (err) {
         console.error('[BOT] startAfkBot error:', err);
-        return { success: false, error: err.message };
-    }
-}error:', err);
         return { success: false, error: err.message };
     }
 }
@@ -829,10 +830,10 @@ async function stopAfkBot(guildId) {
         const session = afkSessions.get(guildId);
         if (!session) return { success: true };
         if (session.timer) clearTimeout(session.timer);
-        try { session.connection.destroy(); } catch(e) {}
+        try { session.connection.destroy(); } catch (e) { }
         afkSessions.delete(guildId);
         return { success: true };
-    } catch(err) {
+    } catch (err) {
         return { success: false, error: err.message };
     }
 }
@@ -846,7 +847,7 @@ function getAfkStatus(guildId) {
     if (!botVoiceChannelId || botVoiceChannelId !== session.channelId) {
         // Bot is gone — clean up silently
         if (session.timer) clearTimeout(session.timer);
-        try { session.connection.destroy(); } catch(e) {}
+        try { session.connection.destroy(); } catch (e) { }
         afkSessions.delete(guildId);
         return { active: false };
     }
@@ -877,23 +878,23 @@ async function exportGuildFull(guildId) {
             uncategorized: [],
             roles: []
         };
-        channels.filter(ch => ch && ch.type === 4).sort((a,b) => a.rawPosition - b.rawPosition).forEach(cat => {
+        channels.filter(ch => ch && ch.type === 4).sort((a, b) => a.rawPosition - b.rawPosition).forEach(cat => {
             const children = channels.filter(ch => ch && ch.parentId === cat.id)
-                .sort((a,b) => a.rawPosition - b.rawPosition)
+                .sort((a, b) => a.rawPosition - b.rawPosition)
                 .map(ch => ({ name: ch.name, type: ch.type }));
             structure.categories.push({ name: cat.name, channels: children });
         });
         channels.filter(ch => ch && !ch.parentId && ch.type !== 4)
-            .sort((a,b) => a.rawPosition - b.rawPosition)
+            .sort((a, b) => a.rawPosition - b.rawPosition)
             .forEach(ch => structure.uncategorized.push({ name: ch.name, type: ch.type }));
         roles.filter(r => !r.managed && r.name !== '@everyone')
-            .sort((a,b) => b.rawPosition - a.rawPosition)
+            .sort((a, b) => b.rawPosition - a.rawPosition)
             .forEach(r => structure.roles.push({
                 name: r.name, color: r.hexColor, hoist: r.hoist,
                 mentionable: r.mentionable, permissions: r.permissions.bitfield.toString()
             }));
         return { success: true, data: structure };
-    } catch(err) { return { success: false, error: err.message }; }
+    } catch (err) { return { success: false, error: err.message }; }
 }
 
 // ---- FULL IMPORT ----
@@ -908,14 +909,14 @@ async function importGuildFull(guildId, structure, keepExisting) {
             for (const [, ch] of channels) {
                 if (!ch) continue;
                 try { await ch.delete(); log.push({ type: 'delete', name: ch.name, success: true }); }
-                catch(e) { log.push({ type: 'delete', name: ch.name, success: false, error: e.message }); }
+                catch (e) { log.push({ type: 'delete', name: ch.name, success: false, error: e.message }); }
             }
             // Delete all non-managed, non-everyone roles
             const roles = await guild.roles.fetch();
             for (const [, r] of roles) {
                 if (r.managed || r.name === '@everyone') continue;
                 try { await r.delete(); log.push({ type: 'delete-role', name: r.name, success: true }); }
-                catch(e) { log.push({ type: 'delete-role', name: r.name, success: false, error: e.message }); }
+                catch (e) { log.push({ type: 'delete-role', name: r.name, success: false, error: e.message }); }
             }
         }
 
@@ -932,7 +933,7 @@ async function importGuildFull(guildId, structure, keepExisting) {
                     description: s.description || null,
                 });
                 log.push({ type: 'settings', name: 'Server settings', success: true });
-            } catch(e) { log.push({ type: 'settings', name: 'Server settings', success: false, error: e.message }); }
+            } catch (e) { log.push({ type: 'settings', name: 'Server settings', success: false, error: e.message }); }
         }
 
         // Roles
@@ -940,7 +941,7 @@ async function importGuildFull(guildId, structure, keepExisting) {
             try {
                 await guild.roles.create({ name: r.name, color: r.color || null, hoist: r.hoist || false, mentionable: r.mentionable || false, permissions: BigInt(r.permissions || '0') });
                 log.push({ type: 'role', name: r.name, success: true });
-            } catch(e) { log.push({ type: 'role', name: r.name, success: false, error: e.message }); }
+            } catch (e) { log.push({ type: 'role', name: r.name, success: false, error: e.message }); }
         }
 
         // Uncategorized channels
@@ -948,7 +949,7 @@ async function importGuildFull(guildId, structure, keepExisting) {
             try {
                 await guild.channels.create({ name: ch.name, type: ch.type });
                 log.push({ type: 'channel', name: ch.name, success: true });
-            } catch(e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
+            } catch (e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
         }
 
         // Categories + children
@@ -960,13 +961,13 @@ async function importGuildFull(guildId, structure, keepExisting) {
                     try {
                         await guild.channels.create({ name: ch.name, type: ch.type, parent: newCat.id });
                         log.push({ type: 'channel', name: ch.name, success: true });
-                    } catch(e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
+                    } catch (e) { log.push({ type: 'channel', name: ch.name, success: false, error: e.message }); }
                 }
-            } catch(e) { log.push({ type: 'category', name: cat.name, success: false, error: e.message }); }
+            } catch (e) { log.push({ type: 'category', name: cat.name, success: false, error: e.message }); }
         }
 
         return { success: true, log };
-    } catch(err) { return { success: false, error: err.message }; }
+    } catch (err) { return { success: false, error: err.message }; }
 }
 
 module.exports = {

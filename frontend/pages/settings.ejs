@@ -509,7 +509,6 @@
 
         // If only AFK is dirty and guild is not, skip guild save
         var doGuildSave = isDirty;
-        var doAfkStart = isAfkDirty;
 
         Promise.resolve()
         .then(function() {
@@ -543,12 +542,6 @@
                 Setcord.showToast('Settings saved!','success');
                 iconBase64 = null;
                 isDirty = false;
-            }
-            if (!doAfkStart) {
-                document.getElementById('save-fab').style.display = 'none';
-                if (doGuildSave) loadSettings();
-                btn.disabled=false; btn.textContent='💾 Save Changes';
-                return;
             }
             // Start AFK bot
             var channelId = document.getElementById('afk-bot-channel').value;
