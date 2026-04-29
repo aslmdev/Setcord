@@ -799,6 +799,13 @@ async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
             selfDeaf: true,
         });
 
+        try {
+            await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
+        } catch (err) {
+            connection.destroy();
+            return { success: false, error: 'Failed to connect to voice channel. Check bot permissions.' };
+        }
+
         let timer = null;
         if (durationSeconds && durationSeconds > 0) {
             timer = setTimeout(async () => {
