@@ -21,7 +21,7 @@ process.on('unhandledRejection', function (reason, promise) {
 });
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 
 // Ensure sessions directory exists
 const sessionsDir = path.join(__dirname, 'sessions');
