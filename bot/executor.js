@@ -782,9 +782,11 @@ client.on(Events.VoiceStateUpdate, (oldState, newState) => {
     }
 });
 
+// بعد
 async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
     try {
-        const guild = await getGuild(guildId);
+        let guild = client.guilds.cache.get(guildId);
+        if (!guild) guild = await client.guilds.fetch(guildId);
         const channel = await guild.channels.fetch(channelId);
         if (!channel) return { success: false, error: 'Channel not found' };
 
@@ -800,9 +802,9 @@ async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
         });
 
         try {
-            await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
+            await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
         } catch (err) {
-            connection.destroy();
+            try { connection.destroy(); } catch (e) { /* already destroyed */ }
             return { success: false, error: 'Failed to connect to voice channel. Check bot permissions.' };
         }
 
