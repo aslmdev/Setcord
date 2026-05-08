@@ -902,7 +902,7 @@ function getAfkStatus(guildId) {
     }
     const elapsed = Math.floor((Date.now() - session.startedAt) / 1000);
     const remaining = session.durationSeconds > 0 ? Math.max(0, session.durationSeconds - elapsed) : -1;
-    return { active: true, channelId: session.channelId, remaining, kickOnExpiry: session.kickOnExpiry };
+    return { active: true, channelId: session.channelId, remaining, elapsed, kickOnExpiry: session.kickOnExpiry };
 }
 
 // ---- FULL EXPORT ----

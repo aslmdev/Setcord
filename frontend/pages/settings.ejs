@@ -837,7 +837,6 @@
                                         <div style="font-size:11px;color:var(--text-muted);">Time remaining: <span
                                                 id="afk-timer-label">∞</span></div>
                                     </div>
-                                    <button class="btn btn-ghost btn-sm" onclick="stopAfkBot()">Stop Bot</button>
                                 </div>
                             </div>
                             <div class="setting-row">
@@ -982,6 +981,7 @@
 
     <script src="/js/setcord.js"></script>
     <script>
+        var _pendingScrollRestore = 0;
         var GUILD_ID = '<%= guild.id %>';
         var AFK_KEY = 'afk_settings_' + '<%= guild.id %>';
         var guildData = null;
@@ -1063,11 +1063,11 @@
             backdrop.innerHTML =
                 '<div class="modal-box" id="modal-box">' +
                 '<div class="modal-icon">🔄</div>' +
-                '<div class="modal-title">البوت شغال دلوقتي</div>' +
-                '<div class="modal-desc">عايز البوت يطلع ويدخل ثاني بالإعدادات الجديدة دلوقتي، ولا التعديلات تتطبق في المرة الجاية؟</div>' +
+                '<div class="modal-title">Bot is currently running</div>' +
+                '<div class="modal-desc">Do you want to restart the bot now with the new settings, or apply them next time it starts?</div>' +
                 '<div class="modal-actions" style="flex-direction:column;gap:8px;">' +
-                '<button class="btn btn-primary" id="afk-restart-now" style="width:100%;justify-content:center;">🔄 ريستارت دلوقتي</button>' +
-                '<button class="btn btn-ghost" id="afk-restart-later" style="width:100%;justify-content:center;">⏳ في المرة الجاية</button>' +
+                '<button class="btn btn-primary" id="afk-restart-now" style="width:100%;justify-content:center;">🔄 Restart Now</button>' +
+                '<button class="btn btn-ghost" id="afk-restart-later" style="width:100%;justify-content:center;">⏳ Apply Next Time</button>' +
                 '</div></div>';
             document.body.appendChild(backdrop);
             document.getElementById('afk-restart-now').onclick = function () { backdrop.remove(); onNow(); };
@@ -1100,6 +1100,11 @@
                     document.getElementById('settings-grid').style.display = 'flex';
                     syncActiveButtons();
                     loadAfkStatus();
+                    if (_pendingScrollRestore) {
+                        var _s = _pendingScrollRestore;
+                        _pendingScrollRestore = 0;
+                        setTimeout(function () { window.scrollTo(0, _s); }, 150);
+                    }
                 }).catch(function () { Setcord.showToast('Failed to load settings', 'error'); });
         }
 
@@ -1153,8 +1158,11 @@
             });
 
             afkSel.innerHTML = '<option value="">Select channel…</option>';
+            var _vcNames = {};
+            (d.voiceChannels || []).forEach(function (ch) { _vcNames[ch.name] = (_vcNames[ch.name] || 0) + 1; });
             (d.voiceChannels || []).forEach(function (ch) {
-                afkSel.innerHTML += '<option value="' + ch.id + '">🔊 ' + ch.name + '</option>';
+                var label = _vcNames[ch.name] > 1 ? '🔊 ' + ch.name + ' #' + ch.id.slice(-4) : '🔊 ' + ch.name;
+                afkSel.innerHTML += '<option value="' + ch.id + '">' + label + '</option>';
             });
 
             if (d.systemChannelId) sysSel.value = d.systemChannelId;
@@ -1170,6 +1178,13 @@
         // ---- SAVE GENERAL ----
         function saveSettings() {
             var scrollPos = window.scrollY;
+
+            var afkWrap = document.getElementById('afk-status-wrap');
+            var botActive = afkWrap && afkWrap.style.display !== 'none';
+            if (botActive) {
+                Setcord.showToast('Stop the AFK bot before changing settings.', 'error', 4000);
+                return;
+            }
 
             // Save AFK settings to localStorage if dirty
             if (isAfkDirty) {
@@ -1188,7 +1203,7 @@
                     promptAfkRestart(
                         function () {
                             // Restart now
-                            Setcord.apiFetch('/api/' + GUILD_ID + '/afk-bot/stop', { method: 'POST' }, 'إيقاف البوت…')
+                            Setcord.apiFetch('/api/' + GUILD_ID + '/afk-bot/stop', { method: 'POST' }, 'Stopping bot…')
                                 .then(function (r) { return r.json(); })
                                 .then(function () {
                                     document.getElementById('afk-status-wrap').style.display = 'none';
@@ -1204,22 +1219,22 @@
                         },
                         function () {
                             // Apply on next start — already saved to localStorage
-                            Setcord.showToast('الإعدادات اتحفظت — هتشتغل في المرة الجاية', 'info');
+                            Setcord.showToast('Settings saved — they will take effect next time the bot starts', 'info');
                         }
                     );
-                    setTimeout(function () { window.scrollTo(0, scrollPos); }, 50);
+                    _pendingScrollRestore = scrollPos;
                     return;
                 }
 
                 if (!isDirty) {
-                    Setcord.showToast('إعدادات الـ AFK اتحفظت ✓', 'success');
+                    Setcord.showToast('Settings saved!', 'success');
                     document.getElementById('save-fab').style.display = 'none';
-                    setTimeout(function () { window.scrollTo(0, scrollPos); }, 50);
+                    _pendingScrollRestore = scrollPos;
                     return;
                 }
             }
 
-            if (!isDirty) { Setcord.showToast('مفيش إعدادات اتغيرت', 'info'); return; }
+            if (!isDirty) { Setcord.showToast('No settings were changed', 'info'); return; }
 
             var btn = document.getElementById('save-btn');
             btn.disabled = true; btn.textContent = 'Saving…';
@@ -1253,7 +1268,7 @@
                         isAfkDirty = false;
                         document.getElementById('save-fab').style.display = 'none';
                         loadSettings();
-                        setTimeout(function () { window.scrollTo(0, scrollPos); }, 300);
+                        _pendingScrollRestore = scrollPos;
                     } else {
                         Setcord.showToast('Error: ' + (data.error || 'Unknown'), 'error', 6000);
                     }
@@ -1368,6 +1383,11 @@
             var isActive = wrap && wrap.style.display !== 'none';
             if (isActive) { stopAfkBot(); return; }
 
+            if (isAfkDirty) {
+                Setcord.showToast('Save your AFK settings before starting the bot.', 'warning', 4000);
+                return;
+            }
+
             var channelId = document.getElementById('afk-bot-channel').value;
             if (!channelId) { Setcord.showToast('Select a voice channel first', 'warning'); return; }
 
@@ -1409,9 +1429,11 @@
             if (active) {
                 btn.textContent = '⛔ Stop Bot';
                 btn.className = 'btn btn-danger';
+                btn.disabled = false;
             } else {
                 btn.textContent = '🤖 Start AFK Bot';
                 btn.className = 'btn btn-primary';
+                btn.disabled = false;
             }
         }
 
@@ -1439,8 +1461,7 @@
 
             // Count UP — elapsed time bot has been in voice
             // Calculate elapsed from remaining and total duration
-            var duration = status.durationSeconds || 0;
-            afkElapsedSeconds = duration > 0 ? Math.max(0, duration - (status.remaining >= 0 ? status.remaining : 0)) : 0;
+            afkElapsedSeconds = status.elapsed || 0;
 
             function updateLabel() {
                 var label = document.getElementById('afk-timer-label');
@@ -1568,8 +1589,19 @@
             });
         }
 
-        window.addEventListener('beforeunload', function (e) { if (isDirty) { e.preventDefault(); e.returnValue = ''; } });
-        document.addEventListener('DOMContentLoaded', function () { loadSettings(); });
+        window.addEventListener('beforeunload', function (e) {
+            sessionStorage.setItem('sc_settings_scroll', window.scrollY);
+            if (isDirty) { e.preventDefault(); e.returnValue = ''; }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var _savedScroll = sessionStorage.getItem('sc_settings_scroll');
+            if (_savedScroll) {
+                sessionStorage.removeItem('sc_settings_scroll');
+                setTimeout(function () { window.scrollTo(0, parseInt(_savedScroll)); }, 400);
+            }
+            loadSettings();
+        });
     </script>
 </body>
 
