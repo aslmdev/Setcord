@@ -1,5 +1,18 @@
 const { Client, GatewayIntentBits, ChannelType, Events } = require('discord.js');
 
+
+try {
+    require('@discordjs/opus');
+    console.log('[VOICE] Native opus: OK');
+} catch {
+    try {
+        require('opusscript');
+        console.log('[VOICE] Opusscript fallback: OK');
+    } catch {
+        console.error('[VOICE] ⚠ No opus codec found — voice will NOT work!');
+    }
+}
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -764,7 +777,7 @@ async function editGuildGeneral(guildId, options) {
 }
 
 // ---- AFK BOT ----
-const { joinVoiceChannel, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
+const { joinVoiceChannel, VoiceConnectionStatus, entersState, getVoiceConnection } = require('@discordjs/voice');
 const afkSessions = new Map();
 
 // Detect when bot is kicked/leaves a voice channel and clean up AFK session
@@ -782,7 +795,7 @@ client.on(Events.VoiceStateUpdate, (oldState, newState) => {
     }
 });
 
-// بعد
+
 async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
     try {
         let guild = client.guilds.cache.get(guildId);
@@ -793,6 +806,13 @@ async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
         // Stop any existing session first
         await stopAfkBot(guildId);
 
+        // Destroy any zombie voice connection not tracked in afkSessions
+        const zombie = getVoiceConnection(guildId);
+        if (zombie) {
+            try { zombie.destroy(); } catch (e) { }
+            await new Promise(r => setTimeout(r, 800));
+        }
+
         const connection = joinVoiceChannel({
             channelId: channel.id,
             guildId: guild.id,
@@ -801,12 +821,32 @@ async function startAfkBot(guildId, channelId, durationSeconds, kickOnExpiry) {
             selfDeaf: true,
         });
 
-        try {
-            await entersState(connection, VoiceConnectionStatus.Ready, 15_000);
-        } catch (err) {
-            try { connection.destroy(); } catch (e) { /* already destroyed */ }
-            return { success: false, error: 'Failed to connect to voice channel. Check bot permissions.' };
+        // Wait briefly for the bot to appear in the channel
+        await new Promise(r => setTimeout(r, 2000));
+
+        // Verify bot actually joined via voice state (not UDP Ready)
+        const botInChannel = guild.members.cache.get(client.user.id)?.voice?.channelId === channelId;
+        if (!botInChannel) {
+            try { connection.destroy(); } catch (e) { }
+            return { success: false, error: 'Bot could not join the voice channel. Check permissions.' };
         }
+
+        // Handle unexpected disconnections after joining
+        connection.on(VoiceConnectionStatus.Disconnected, async () => {
+            try {
+                await Promise.race([
+                    entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
+                    entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
+                ]);
+            } catch {
+                const session = afkSessions.get(guildId);
+                if (session) {
+                    if (session.timer) clearTimeout(session.timer);
+                    try { connection.destroy(); } catch (e) { }
+                    afkSessions.delete(guildId);
+                }
+            }
+        });
 
         let timer = null;
         if (durationSeconds && durationSeconds > 0) {
