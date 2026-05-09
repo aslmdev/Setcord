@@ -1103,7 +1103,7 @@
                     if (_pendingScrollRestore) {
                         var _s = _pendingScrollRestore;
                         _pendingScrollRestore = 0;
-                        setTimeout(function () { window.scrollTo(0, _s); }, 150);
+                        setTimeout(function () { window.scrollTo({ top: _s, behavior: 'smooth' }); }, 150);
                     }
                 }).catch(function () { Setcord.showToast('Failed to load settings', 'error'); });
         }
@@ -1157,12 +1157,14 @@
                 });
             });
 
-            afkSel.innerHTML = '<option value="">Select channel…</option>';
+            afkSel.innerHTML = '<option value="" disabled>Select channel…</option>';
             var _vcNames = {};
             (d.voiceChannels || []).forEach(function (ch) { _vcNames[ch.name] = (_vcNames[ch.name] || 0) + 1; });
             (d.voiceChannels || []).forEach(function (ch) {
-                var label = _vcNames[ch.name] > 1 ? '🔊 ' + ch.name + ' #' + ch.id.slice(-4) : '🔊 ' + ch.name;
-                afkSel.innerHTML += '<option value="' + ch.id + '">' + label + '</option>';
+                var opt = document.createElement('option');
+                opt.value = ch.id;
+                opt.textContent = (_vcNames[ch.name] > 1 ? '🔊 ' + ch.name + ' #' + ch.id.slice(-4) : '🔊 ' + ch.name);
+                afkSel.appendChild(opt);
             });
 
             if (d.systemChannelId) sysSel.value = d.systemChannelId;
@@ -1442,8 +1444,13 @@
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data.success && data.data.active) {
-                        showAfkStatus(data.data);
                         _setAfkBtnActive(true);
+                        document.getElementById('afk-status-wrap').style.display = 'block';
+                        if (!afkTimerInterval) {
+                            showAfkStatus(data.data);
+                        } else if (!afkStatusInterval) {
+                            afkStatusInterval = setInterval(loadAfkStatus, 5000);
+                        }
                     } else {
                         document.getElementById('afk-status-wrap').style.display = 'none';
                         if (afkTimerInterval) { clearInterval(afkTimerInterval); afkTimerInterval = null; }
@@ -1598,7 +1605,7 @@
             var _savedScroll = sessionStorage.getItem('sc_settings_scroll');
             if (_savedScroll) {
                 sessionStorage.removeItem('sc_settings_scroll');
-                setTimeout(function () { window.scrollTo(0, parseInt(_savedScroll)); }, 400);
+                setTimeout(function () { window.scrollTo({ top: parseInt(_savedScroll), behavior: 'smooth' }); }, 400);
             }
             loadSettings();
         });
