@@ -900,7 +900,9 @@ function getAfkStatus(guildId) {
         afkSessions.delete(guildId);
         return { active: false };
     }
-    const elapsed = Math.floor((Date.now() - session.startedAt) / 1000);
+    const voiceJoinedAt = guild?.members?.me?.voice?.joinedTimestamp;
+    const startTime = voiceJoinedAt || session.startedAt;
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
     const remaining = session.durationSeconds > 0 ? Math.max(0, session.durationSeconds - elapsed) : -1;
     return { active: true, channelId: session.channelId, remaining, elapsed, kickOnExpiry: session.kickOnExpiry };
 }
