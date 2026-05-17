@@ -12,6 +12,9 @@ const authRoutes = require('./backend/routes/auth');
 const apiRoutes = require('./backend/routes/api');
 const setupRoutes = require('./backend/routes/setup');
 
+const wizardRoutes = require('./backend/routes/wizard');
+const { isWizardComplete } = require('./backend/utils/wizardState');
+
 process.on('uncaughtException', function (err) {
     console.error('\x1b[31m[CRASH] Uncaught Exception:\x1b[0m', err);
 });
@@ -93,6 +96,7 @@ app.get('/dashboard/:guildId/channels', requireAuth, async (req, res) => {
     try {
         const guildId = req.params.guildId;
         if (!isBotInGuild(guildId)) return res.redirect('/servers');
+        if (!isWizardComplete(guildId)) return res.redirect(`/dashboard/${guildId}/wizard`);
         const result = await getGuildInfo(guildId);
         if (!result.success) return res.redirect('/servers');
         res.render('channels', { user: req.session.user, guild: result.guild });
@@ -151,6 +155,21 @@ app.get('/dashboard/:guildId/settings', requireAuth, async (req, res) => {
 app.get('/dashboard', requireAuth, (req, res) => res.redirect('/servers'));
 app.use('/api', requireAuth, apiRoutes);
 app.use('/setup', requireAuth, setupRoutes);
+app.use('/wizard', requireAuth, wizardRoutes);
+
+app.get('/dashboard/:guildId/wizard', requireAuth, async (req, res) => {
+    try {
+        const guildId = req.params.guildId;
+        if (!isBotInGuild(guildId)) return res.redirect('/servers');
+        if (isWizardComplete(guildId)) return res.redirect(`/dashboard/${guildId}/channels`);
+        const result = await getGuildInfo(guildId);
+        if (!result.success) return res.redirect('/servers');
+        res.render('wizard', { user: req.session.user, guild: result.guild });
+    } catch (err) {
+        console.error('[ROUTE ERROR] /wizard:', err);
+        res.redirect('/servers');
+    }
+});
 
 // ---- Start ----
 async function start() {

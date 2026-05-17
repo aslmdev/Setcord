@@ -1,3 +1,4 @@
+const { markWizardNeeded, preMarkExistingGuilds } = require('../backend/utils/wizardState');
 const { Client, GatewayIntentBits, ChannelType, Events } = require('discord.js');
 
 
@@ -30,6 +31,8 @@ let isReady = false;
 client.once(Events.ClientReady, () => {
     console.log(`[BOT] Logged in as ${client.user.tag}`);
     isReady = true;
+    preMarkExistingGuilds(client.guilds.cache);
+    console.log(`[BOT] Pre-marked ${client.guilds.cache.size} existing guild(s) as wizard-complete`);
 });
 
 // ========================
@@ -37,6 +40,8 @@ client.once(Events.ClientReady, () => {
 // ========================
 
 client.on(Events.GuildCreate, async (guild) => {
+    markWizardNeeded(guild.id);
+    console.log(`[BOT] Wizard triggered for new guild: ${guild.name}`);
     console.log(`[BOT] GuildCreate fired for: ${guild.name}`);
     try {
         const fullGuild = await guild.fetch();
@@ -1019,6 +1024,33 @@ async function importGuildFull(guildId, structure, keepExisting) {
 
         return { success: true, log };
     } catch (err) { return { success: false, error: err.message }; }
+}
+
+async function deleteAllChannels(guildId) {
+    try {
+        const guild = await client.guilds.fetch(guildId);
+        const channels = await guild.channels.fetch();
+        for (const [, ch] of channels) {
+            await ch.delete().catch(() => { });
+        }
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err.message };
+    }
+}
+
+async function deleteAllRoles(guildId) {
+    try {
+        const guild = await client.guilds.fetch(guildId);
+        const roles = await guild.roles.fetch();
+        for (const [, role] of roles) {
+            if (role.managed || role.name === '@everyone') continue;
+            await role.delete().catch(() => { });
+        }
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err.message };
+    }
 }
 
 module.exports = {
