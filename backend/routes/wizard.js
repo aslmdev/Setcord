@@ -45,105 +45,106 @@ router.post('/:guildId/generate', requireGuildAdmin, async (req, res) => {
         console.log('[WIZARD] Groq raw response:', rawText);
 
         const structure = JSON.parse(rawText);
+        res.json({ success: true, structure: structure });
+
     } catch (err) {
         console.error('[WIZARD] Groq error:', err.response?.data || err.message);
         res.json({ success: false, error: err.message });
     }
-});
 
-// ── Apply structure ──
-router.post('/:guildId/apply', requireGuildAdmin, async (req, res) => {
-    const { structure, clearExisting } = req.body;
-    if (!structure) return res.json({ success: false, error: 'No structure provided' });
+    // ── Apply structure ──
+    router.post('/:guildId/apply', requireGuildAdmin, async (req, res) => {
+        const { structure, clearExisting } = req.body;
+        if (!structure) return res.json({ success: false, error: 'No structure provided' });
 
-    try {
-        const guildId = req.params.guildId; // ← الفيكس الأساسي
+        try {
+            const guildId = req.params.guildId; // ← الفيكس الأساسي
 
-        const log = [];
+            const log = [];
 
-        // ── Clear existing if requested ──
-        if (clearExisting?.channels) {
-            const delChResult = await bot.deleteAllChannels(guildId);
-            log.push({ type: 'clear', name: 'Cleared all channels', success: delChResult.success, error: delChResult.error });
-        }
-        if (clearExisting?.roles) {
-            const delRoResult = await bot.deleteAllRoles(guildId);
-            log.push({ type: 'clear', name: 'Cleared all roles', success: delRoResult.success, error: delRoResult.error });
-        }
-
-        // ── Apply settings ──
-        if (structure.settings?.description) {
-            await bot.editGuildGeneral(guildId, { description: structure.settings.description }).catch(() => { });
-        }
-
-        // ── Create roles ──
-        for (const role of (structure.roles || [])) {
-            const r = await bot.createRole(guildId, role.name, role.color || null);
-            log.push({ type: 'role', name: role.name, success: r.success, error: r.error });
-        }
-
-        // ── Create categories + channels ──
-        for (const cat of (structure.categories || [])) {
-            const catResult = await bot.createCategory(guildId, cat.name);
-            if (!catResult.success) {
-                log.push({ type: 'category', name: cat.name, success: false, error: catResult.error });
-                continue;
+            // ── Clear existing if requested ──
+            if (clearExisting?.channels) {
+                const delChResult = await bot.deleteAllChannels(guildId);
+                log.push({ type: 'clear', name: 'Cleared all channels', success: delChResult.success, error: delChResult.error });
             }
-            log.push({ type: 'category', name: cat.name, success: true });
-
-            for (const ch of (cat.channels || [])) {
-                const typeMap = { 0: 'text', 2: 'voice', 5: 'announcement', 15: 'forum' };
-                const chType = typeMap[ch.type] || 'text';
-                const chResult = await bot.createChannel(guildId, ch.name, chType, catResult.category.id);
-                log.push({ type: 'channel', name: ch.name, success: chResult.success, error: chResult.error });
+            if (clearExisting?.roles) {
+                const delRoResult = await bot.deleteAllRoles(guildId);
+                log.push({ type: 'clear', name: 'Cleared all roles', success: delRoResult.success, error: delRoResult.error });
             }
+
+            // ── Apply settings ──
+            if (structure.settings?.description) {
+                await bot.editGuildGeneral(guildId, { description: structure.settings.description }).catch(() => { });
+            }
+
+            // ── Create roles ──
+            for (const role of (structure.roles || [])) {
+                const r = await bot.createRole(guildId, role.name, role.color || null);
+                log.push({ type: 'role', name: role.name, success: r.success, error: r.error });
+            }
+
+            // ── Create categories + channels ──
+            for (const cat of (structure.categories || [])) {
+                const catResult = await bot.createCategory(guildId, cat.name);
+                if (!catResult.success) {
+                    log.push({ type: 'category', name: cat.name, success: false, error: catResult.error });
+                    continue;
+                }
+                log.push({ type: 'category', name: cat.name, success: true });
+
+                for (const ch of (cat.channels || [])) {
+                    const typeMap = { 0: 'text', 2: 'voice', 5: 'announcement', 15: 'forum' };
+                    const chType = typeMap[ch.type] || 'text';
+                    const chResult = await bot.createChannel(guildId, ch.name, chType, catResult.category.id);
+                    log.push({ type: 'channel', name: ch.name, success: chResult.success, error: chResult.error });
+                }
+            }
+
+            markWizardComplete(guildId);
+
+            const created = log.filter(l => l.success).length;
+            const failed = log.filter(l => !l.success).length;
+            console.log(`[WIZARD] Applied for ${guildId}: ${created} created, ${failed} failed`);
+
+            res.json({ success: true, log, created, failed });
+        } catch (err) {
+            console.error('[WIZARD] Apply error:', err.message);
+            res.json({ success: false, error: err.message });
         }
+    });
 
-        markWizardComplete(guildId);
+    // ── Skip wizard ──
+    router.post('/:guildId/skip', (req, res) => {
+        markWizardComplete(req.params.guildId, { skipped: true });
+        res.json({ success: true });
+    });
 
-        const created = log.filter(l => l.success).length;
-        const failed = log.filter(l => !l.success).length;
-        console.log(`[WIZARD] Applied for ${guildId}: ${created} created, ${failed} failed`);
+    // ── Build AI prompt ──
+    function buildPrompt(a) {
+        const styleGuides = {
+            modern: 'Use clean lowercase hyphenated names. Categories in UPPERCASE. Example channels: "general-chat", "announcements", "off-topic", "bot-commands"',
+            emoji: 'Add emoji prefix with ・ separator. Example: "💬・general", "📢・announcements", "🎮・gaming", "🔊・voice-lounge". Match emoji to channel purpose.',
+            official: 'Use Title Case professional names. Example: "General Discussion", "Staff Announcements", "Support Desk", "Member Lounge"',
+            simple: 'Use short clean names, maximum 3 channels per category, keep it minimal',
+            arabic: 'Use Arabic names for ALL channels, categories and roles. Example: "عام", "الإعلانات", "الدردشة-العامة"'
+        };
+        const roleGuides = {
+            simple: '3-5 roles only: Owner, Admin, Moderator, Member, Bot',
+            standard: '8-12 roles with clear hierarchy: ownership > staff > special > members. Use vibrant distinct colors.',
+            detailed: '15-20 roles: full staff tree (Owner, Co-Owner, Head Admin, Admin, Sr.Mod, Mod, Helper, Trial-Mod) + member levels (VIP, Booster, Active, Member, New) + special roles',
+            none: 'Return an empty roles array: []'
+        };
+        const features = a.features || [];
+        const featureLines = [
+            features.includes('welcome') && '- A WELCOME category: rules, announcements, server-info, roles-info channels',
+            features.includes('logs') && '- A STAFF/LOGS category: mod-logs, message-logs, join-leave-logs, staff-chat channels',
+            features.includes('afk') && '- An AFK voice channel inside the voice category',
+            features.includes('tickets') && '- A SUPPORT/TICKETS category: open-ticket, ticket-logs channels',
+            features.includes('media') && '- A MEDIA category: memes, screenshots, fan-art, videos channels',
+            features.includes('bot') && '- A BOTS category: bot-commands, music-bot channels',
+        ].filter(Boolean).join('\n');
 
-        res.json({ success: true, log, created, failed });
-    } catch (err) {
-        console.error('[WIZARD] Apply error:', err.message);
-        res.json({ success: false, error: err.message });
-    }
-});
-
-// ── Skip wizard ──
-router.post('/:guildId/skip', (req, res) => {
-    markWizardComplete(req.params.guildId, { skipped: true });
-    res.json({ success: true });
-});
-
-// ── Build AI prompt ──
-function buildPrompt(a) {
-    const styleGuides = {
-        modern: 'Use clean lowercase hyphenated names. Categories in UPPERCASE. Example channels: "general-chat", "announcements", "off-topic", "bot-commands"',
-        emoji: 'Add emoji prefix with ・ separator. Example: "💬・general", "📢・announcements", "🎮・gaming", "🔊・voice-lounge". Match emoji to channel purpose.',
-        official: 'Use Title Case professional names. Example: "General Discussion", "Staff Announcements", "Support Desk", "Member Lounge"',
-        simple: 'Use short clean names, maximum 3 channels per category, keep it minimal',
-        arabic: 'Use Arabic names for ALL channels, categories and roles. Example: "عام", "الإعلانات", "الدردشة-العامة"'
-    };
-    const roleGuides = {
-        simple: '3-5 roles only: Owner, Admin, Moderator, Member, Bot',
-        standard: '8-12 roles with clear hierarchy: ownership > staff > special > members. Use vibrant distinct colors.',
-        detailed: '15-20 roles: full staff tree (Owner, Co-Owner, Head Admin, Admin, Sr.Mod, Mod, Helper, Trial-Mod) + member levels (VIP, Booster, Active, Member, New) + special roles',
-        none: 'Return an empty roles array: []'
-    };
-    const features = a.features || [];
-    const featureLines = [
-        features.includes('welcome') && '- A WELCOME category: rules, announcements, server-info, roles-info channels',
-        features.includes('logs') && '- A STAFF/LOGS category: mod-logs, message-logs, join-leave-logs, staff-chat channels',
-        features.includes('afk') && '- An AFK voice channel inside the voice category',
-        features.includes('tickets') && '- A SUPPORT/TICKETS category: open-ticket, ticket-logs channels',
-        features.includes('media') && '- A MEDIA category: memes, screenshots, fan-art, videos channels',
-        features.includes('bot') && '- A BOTS category: bot-commands, music-bot channels',
-    ].filter(Boolean).join('\n');
-
-    return `You are an expert Discord server architect. Generate an optimal server structure based on these exact requirements:
+        return `You are an expert Discord server architect. Generate an optimal server structure based on these exact requirements:
 
 SERVER DETAILS:
 - Name: ${a.serverName}
@@ -190,6 +191,6 @@ STRICT RULES:
 - NO duplicate channel names
 - Apply the custom instructions above even if they conflict with defaults
 - Make the structure feel tailor-made for THIS specific server, not generic`;
-}
+    }});
 
 module.exports = router;
