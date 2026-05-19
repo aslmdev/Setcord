@@ -435,4 +435,24 @@ router.patch('/:guildId/roles/:roleId', requireGuildAdmin, async (req, res) => {
     }
 });
 
+// GET /api/:guildId/channels/:channelId/permissions
+router.get('/:guildId/channels/:channelId/permissions', requireGuildAdmin, async (req, res) => {
+    const result = await bot.getChannelPermissions(req.guildId, req.params.channelId);
+    res.json(result);
+});
+
+// PUT /api/:guildId/channels/:channelId/permissions/:targetId
+router.put('/:guildId/channels/:channelId/permissions/:targetId', requireGuildAdmin, async (req, res) => {
+    const { flags } = req.body;
+    if (!flags) return res.json({ success: false, error: 'flags required' });
+    const result = await bot.setChannelPermission(req.guildId, req.params.channelId, req.params.targetId, flags);
+    res.json(result);
+});
+
+// DELETE /api/:guildId/channels/:channelId/permissions/:targetId
+router.delete('/:guildId/channels/:channelId/permissions/:targetId', requireGuildAdmin, async (req, res) => {
+    const result = await bot.deleteChannelPermission(req.guildId, req.params.channelId, req.params.targetId);
+    res.json(result);
+});
+
 module.exports = router;

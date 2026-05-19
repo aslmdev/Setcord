@@ -1027,7 +1027,7 @@
                             maxlength="200"></textarea>
                     </div>
 
-                    <div class="wizard-nav" style="margin-top:24px;">
+                    <div class="wizard-nav" style="margin-top:24px">
                         <button class="btn-next" onclick="goNext()" id="btn-1-next">
                             Let's go <span>→</span>
                         </button>
@@ -1133,6 +1133,72 @@
                     </div>
                 </div>
 
+                <!-- ════ STEP 3B: Language ════ -->
+                <div class="step" data-step="3b">
+                    <span class="step-icon">🌐</span>
+                    <h2 class="step-title">لغة السيرفر؟</h2>
+                    <p class="step-subtitle">هيتكلموا بإيه ف السيرفر؟</p>
+
+                    <div class="options-grid three">
+                        <div class="option-card" onclick="selectOption('language','arabic',this)">
+                            <span class="option-emoji">🌙</span>
+                            <div class="option-name">عربي فقط</div>
+                            <div class="option-desc">كل حاجة بالعربي</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('language','english',this)">
+                            <span class="option-emoji">🇺🇸</span>
+                            <div class="option-name">English Only</div>
+                            <div class="option-desc">Everything in English</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('language','both',this)">
+                            <span class="option-emoji">🌍</span>
+                            <div class="option-name">عربي + English</div>
+                            <div class="option-desc">Mix of both</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                    </div>
+
+                    <div class="wizard-nav">
+                        <button class="btn-back" onclick="goBack()">← Back</button>
+                        <button class="btn-next" id="btn-3b-next" onclick="goNext()" disabled>Continue →</button>
+                    </div>
+                </div>
+
+                <!-- ════ STEP 3C: Server Size ════ -->
+                <div class="step" data-step="3c">
+                    <span class="step-icon">👥</span>
+                    <h2 class="step-title">كام عضو متوقع؟</h2>
+                    <p class="step-subtitle">هيساعد AI يقرر حجم وتعقيد السيرفر.</p>
+
+                    <div class="options-grid three">
+                        <div class="option-card" onclick="selectOption('serverSize','small',this)">
+                            <span class="option-emoji">🌱</span>
+                            <div class="option-name">صغير</div>
+                            <div class="option-desc">أقل من 50 عضو</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('serverSize','medium',this)">
+                            <span class="option-emoji">⚖️</span>
+                            <div class="option-name">متوسط</div>
+                            <div class="option-desc">50 - 500 عضو</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('serverSize','large',this)">
+                            <span class="option-emoji">🏙️</span>
+                            <div class="option-name">كبير</div>
+                            <div class="option-desc">أكتر من 500 عضو</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                    </div>
+
+                    <div class="wizard-nav">
+                        <button class="btn-back" onclick="goBack()">← Back</button>
+                        <button class="btn-next" id="btn-3c-next" onclick="goNext()" disabled>Continue →</button>
+                    </div>
+                </div>
+
                 <!-- ════ STEP 4: Features ════ -->
                 <div class="step" data-step="4">
                     <span class="step-icon">🛠️</span>
@@ -1232,6 +1298,78 @@
                     <div class="wizard-nav">
                         <button class="btn-back" onclick="goBack()">← Back</button>
                         <button class="btn-next" onclick="goNext()" id="btn-5-next" disabled>Continue →</button>
+                    </div>
+                </div>
+
+                <!-- ════ STEP 5B: Role Style ════ -->
+                <div class="step" data-step="5b">
+                    <span class="step-icon">🎭</span>
+                    <h2 class="step-title">ستايل الرولات؟</h2>
+                    <p class="step-subtitle">اختار الهيراركي اللي يناسب السيرفر.</p>
+
+                    <div class="options-grid">
+                        <div class="option-card" onclick="selectOption('roleStyle','corporate',this)">
+                            <span class="option-emoji">💼</span>
+                            <div class="option-name">Corporate</div>
+                            <div class="option-desc">Founder, CEO, COO, CFO, Manager...</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('roleStyle','gaming',this)">
+                            <span class="option-emoji">🎮</span>
+                            <div class="option-name">Gaming</div>
+                            <div class="option-desc">Head Admin, Admin, Sr.Mod, Mod, Helper...</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('roleStyle','arabic_corporate',this)">
+                            <span class="option-emoji">🌙</span>
+                            <div class="option-name">عربي رسمي</div>
+                            <div class="option-desc">المؤسس، المدير التنفيذي، المشرف العام...</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('roleStyle','military',this)">
+                            <span class="option-emoji">⚔️</span>
+                            <div class="option-name">Military</div>
+                            <div class="option-desc">General, Colonel, Major, Captain...</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                    </div>
+
+                    <div class="wizard-nav">
+                        <button class="btn-back" onclick="goBack()">← Back</button>
+                        <button class="btn-next" id="btn-5b-next" onclick="goNext()" disabled>Continue →</button>
+                    </div>
+                </div>
+
+                <!-- ════ STEP 5C: Moderation Level ════ -->
+                <div class="step" data-step="5c">
+                    <span class="step-icon">⚖️</span>
+                    <h2 class="step-title">مستوى التشديد؟</h2>
+                    <p class="step-subtitle">هيأثر على شكل قنوات الرولات والقوانين.</p>
+
+                    <div class="options-grid three">
+                        <div class="option-card" onclick="selectOption('modLevel','strict',this)">
+                            <span class="option-emoji">🔒</span>
+                            <div class="option-name">صارم</div>
+                            <div class="option-desc">قوانين واضحة، مود-لوج، نظام تيكت</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('modLevel','moderate',this)">
+                            <span class="option-emoji">⚖️</span>
+                            <div class="option-name">معتدل</div>
+                            <div class="option-desc">Setup عادي</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('modLevel','relaxed',this)">
+                            <span class="option-emoji">😎</span>
+                            <div class="option-name">مريح</div>
+                            <div class="option-desc">Chill vibes، مش فورمال</div>
+                            <div class="option-check">✓</div>
+                        </div>
+                    </div>
+
+                    <div class="wizard-nav">
+                        <button class="btn-back" onclick="goBack()">← Back</button>
+                        <button class="btn-next" id="btn-5c-next" onclick="goNext()" disabled>Continue →</button>
                     </div>
                 </div>
 
@@ -1389,18 +1527,23 @@
 
     <script>
         var GUILD_ID = '<%= guild.id %>';
-        var TOTAL_STEPS = 10;
+        var TOTAL_STEPS = 13;
         var currentStep = 1;
-        var GUILD_NAME = <%- JSON.stringify(guild.name) %>;
+        var GUILD_NAME = <% - JSON.stringify(guild.name) %>;
         var answers = {
             serverName: GUILD_NAME,
             description: '',
             serverType: '',
             channelStyle: '',
+            language: '',
+            serverSize: '',
             features: ['welcome', 'logs'],
             roleComplexity: '',
+            roleStyle: '',
+            modLevel: '',
             extraNotes: ''
         };
+
         var generatedStructure = null;
         var editableStructure = null;
         var clearOptions = { channels: false, roles: false };
@@ -1436,13 +1579,24 @@
         }
 
         function goNext() {
-            // Collect answers from current step
             if (currentStep === 1) {
                 answers.serverName = document.getElementById('ans-name').value.trim() || answers.serverName;
                 answers.description = document.getElementById('ans-description').value.trim();
             }
+
+            var stepOrder = [1, 2, 3, '3b', '3c', 4, 5, '5b', '5c', 6];
+            var idx = stepOrder.indexOf(currentStep);
+            var next = stepOrder[idx + 1];
+
             if (currentStep === 6) { startGeneration(); return; }
-            showStep(currentStep + 1);
+            if (next !== undefined) showStep(next);
+        }
+
+        function goBack() {
+            var stepOrder = [1, 2, 3, '3b', '3c', 4, 5, '5b', '5c', 6];
+            var idx = stepOrder.indexOf(currentStep);
+            if (currentStep === 8) { showStep(6); return; }
+            if (idx > 0) showStep(stepOrder[idx - 1]);
         }
 
         function goBack() {

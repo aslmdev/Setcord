@@ -293,6 +293,24 @@
                                 <input type="hidden" id="rename-channel-id">
                             </div>
 
+                            <!-- Permissions Editor -->
+                            <div class="card" id="perms-card" style="display:none;">
+                                <div class="card-header">
+                                    <h3>🔒 Channel Permissions</h3>
+                                    <button class="btn btn-ghost btn-sm" onclick="closePermsCard()">✕</button>
+                                </div>
+                                <div id="perms-channel-name"
+                                    style="font-size:12px;color:var(--text-muted);margin-bottom:14px;"></div>
+
+                                <div id="perms-list"
+                                    style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;"></div>
+
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <select class="form-input" id="perms-add-role" style="flex:1;"></select>
+                                    <button class="btn btn-primary btn-sm" onclick="addPermOverwrite()">＋ Add</button>
+                                </div>
+                            </div>
+
                             <!-- Move to category modal -->
                             <div class="card" id="move-cat-card" style="display:none;">
                                 <div class="card-header">
@@ -544,6 +562,7 @@
                 '<span class="channel-name">' + esc(ch.name) + '</span>' +
                 '</div>' +
                 '<div class="channel-actions">' +
+                '<button class="action-btn" onclick="openPermsCard(\'' + ch.id + '\',\'' + esc(ch.name).replace(/\'/g, "\\'") + '\')" title="Permissions">🔒</button>' +
                 '<button class="action-btn" onclick="startRename(\'' + ch.id + '\',\'' + esc(ch.name).replace(/\'/g, "\\'") + '\')" title="Rename">✏️</button>' +
                 deleteBtn +
                 '</div>';
@@ -1125,22 +1144,71 @@
         }
 
         function deleteCategory(catId, name) {
-            Setcord.showConfirmModal({
-                title: 'Delete Category', desc: 'Permanently delete', targetName: name, confirmText: 'Delete Category',
-                onConfirm: function () {
-                    var result = TM.intercept('deleteCategory', { channelId: catId }, 'Delete category: ' + name);
-                    if (result.intercepted) {
-                        var el = document.querySelector('.category-section[data-cat-id="' + catId + '"]');
-                        if (el) { el.style.opacity = '0.3'; }
-                        return;
-                    }
-                    Setcord.apiFetch('/api/' + GUILD_ID + '/channels/' + catId, { method: 'DELETE' }, 'Deleting category…')
-                        .then(function (r) { return r.json(); }).then(function (data) {
-                            if (data.success) { Setcord.showToast('Category deleted', 'success'); loadChannels(); }
-                            else Setcord.showToast(Setcord.parseDiscordError(data), 'error');
+            var body = document.querySelector('.channels-body[data-cat-id="' + catId + '"]');
+            var channelCount = body ? body.querySelectorAll('.channel-item').length : 0;
+
+            var desc = 'Permanently delete the category';
+            if (channelCount > 0) {
+                desc += '. This has <strong>' + channelCount + ' channel(s)</strong> inside.';
+            }
+
+            var existing = document.getElementById('setcord-cat-modal');
+            if (existing) existing.remove();
+
+            var backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop';
+            backdrop.id = 'setcord-cat-modal';
+            backdrop.innerHTML = '<div class="modal-box" id="modal-box">' +
+                '<div class="modal-icon">📁</div>' +
+                '<div class="modal-title">Delete Category</div>' +
+                '<div class="modal-desc">' + desc + '<br><span class="modal-target">' + esc(name) + '</span></div>' +
+                (channelCount > 0 ? '<div style="margin:12px 0;display:flex;flex-direction:column;gap:8px;">' +
+                    '<button class="btn btn-ghost" id="del-cat-only" style="width:100%;justify-content:center;">Delete Category Only (keep channels)</button>' +
+                    '<button class="btn btn-danger" id="del-cat-and-channels" style="width:100%;justify-content:center;">🗑️ Delete Category + All ' + channelCount + ' Channels</button>' +
+                    '</div>' : '<div class="modal-actions" style="margin-top:16px;"><button class="btn btn-ghost" id="del-cancel">Cancel</button><button class="btn btn-danger" id="del-cat-only">Delete</button></div>') +
+                (channelCount > 0 ? '<button class="btn btn-ghost btn-sm" id="del-cancel" style="width:100%;justify-content:center;margin-top:4px;">Cancel</button>' : '') +
+                '</div>';
+            document.body.appendChild(backdrop);
+
+            function closeIt() {
+                backdrop.classList.add('closing');
+                setTimeout(function () { backdrop.remove(); }, 180);
+            }
+
+            document.getElementById('del-cancel').onclick = closeIt;
+            backdrop.addEventListener('click', function (e) { if (e.target === backdrop) closeIt(); });
+
+            document.getElementById('del-cat-only').onclick = function () {
+                closeIt();
+                Setcord.apiFetch('/api/' + GUILD_ID + '/channels/' + catId, { method: 'DELETE' }, 'Deleting category…')
+                    .then(function (r) { return r.json(); }).then(function (data) {
+                        if (data.success) { Setcord.showToast('Category deleted', 'success'); loadChannels(); }
+                        else Setcord.showToast(Setcord.parseDiscordError(data), 'error');
+                    });
+            };
+
+            var delAll = document.getElementById('del-cat-and-channels');
+            if (delAll) {
+                delAll.onclick = function () {
+                    closeIt();
+                    // Get channel IDs + category ID
+                    var allIds = [catId];
+                    if (body) {
+                        body.querySelectorAll('.channel-item[data-channel-id]').forEach(function (el) {
+                            allIds.push(el.dataset.channelId);
                         });
-                }
-            });
+                    }
+                    Setcord.apiFetch('/api/' + GUILD_ID + '/channels/bulk-delete', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ channelIds: allIds })
+                    }, 'Deleting…')
+                        .then(function (r) { return r.json(); }).then(function (data) {
+                            var del = (data.deleted || []).length;
+                            Setcord.showToast(del + ' items deleted', 'success');
+                            loadChannels();
+                        });
+                };
+            }
         }
 
         // ---- RENAME ----
@@ -1191,6 +1259,148 @@
             else if (id === 'rename-input') submitRename();
             else if (id === 'category-name') createCategory();
         });
+
+        // ---- PERMISSIONS ----
+        var activePermsChannelId = null;
+        var currentPermsData = null;
+
+        var PERM_LABELS = {
+            ViewChannel: '👁 View Channel',
+            SendMessages: '✉️ Send Messages',
+            ReadMessageHistory: '📜 Read History',
+            AttachFiles: '📎 Attach Files',
+            EmbedLinks: '🔗 Embed Links',
+            AddReactions: '😀 Add Reactions',
+            UseExternalEmojis: '✨ External Emojis',
+            ManageMessages: '🛡️ Manage Messages',
+            MentionEveryone: '📢 Mention Everyone',
+            Connect: '🔊 Connect (Voice)',
+            Speak: '🎙️ Speak (Voice)',
+            MuteMembers: '🔇 Mute Members',
+        };
+
+        function openPermsCard(channelId, channelName) {
+            activePermsChannelId = channelId;
+            document.getElementById('perms-card').style.display = 'block';
+            document.getElementById('perms-channel-name').textContent = '# ' + channelName;
+            document.getElementById('perms-list').innerHTML = '<div class="loading-spinner" style="padding:20px;">Loading...</div>';
+
+            Setcord.apiFetch('/api/' + GUILD_ID + '/channels/' + channelId + '/permissions', {}, 'Loading permissions…')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (!data.success) { Setcord.showToast(data.error, 'error'); return; }
+                    currentPermsData = data;
+                    renderPermsList(data);
+                });
+        }
+
+        function renderPermsList(data) {
+            var list = document.getElementById('perms-list');
+            list.innerHTML = '';
+
+            // Populate roles dropdown
+            var sel = document.getElementById('perms-add-role');
+            sel.innerHTML = '<option value="">Select role to add...</option>';
+            (data.roles || []).forEach(function (r) {
+                var existing = (data.overwrites || []).find(function (o) { return o.id === r.id; });
+                if (!existing) sel.innerHTML += '<option value="' + r.id + '">' + esc(r.name) + '</option>';
+            });
+
+            if (!data.overwrites || data.overwrites.length === 0) {
+                list.innerHTML = '<p style="font-size:12px;color:var(--text-muted);">No permission overwrites. Default permissions apply.</p>';
+                return;
+            }
+
+            data.overwrites.forEach(function (ow) {
+                var card = document.createElement('div');
+                card.style.cssText = 'background:var(--bg-input);border-radius:var(--radius);padding:12px;border:1px solid var(--border-color);';
+
+                var header = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+                    '<div style="display:flex;align-items:center;gap:8px;">' +
+                    '<div style="width:10px;height:10px;border-radius:50%;background:' + ow.color + ';flex-shrink:0;"></div>' +
+                    '<span style="font-size:13px;font-weight:600;">' + esc(ow.name) + '</span>' +
+                    '</div>' +
+                    '<button class="action-btn delete" onclick="removeOverwrite(\'' + ow.id + '\')">🗑️</button>' +
+                    '</div>';
+
+                var permsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">';
+                Object.entries(PERM_LABELS).forEach(function (entry) {
+                    var perm = entry[0], label = entry[1];
+                    var val = ow.flags[perm];
+                    var color = val === true ? '#10b981' : val === false ? '#ef4444' : '#4a4a6a';
+                    var icon = val === true ? '✓' : val === false ? '✗' : '—';
+                    permsHtml += '<div onclick="cyclePerm(\'' + ow.id + '\',\'' + perm + '\')" style="cursor:pointer;display:flex;align-items:center;gap:5px;padding:3px 6px;border-radius:4px;font-size:11px;background:rgba(255,255,255,0.03);hover:background:rgba(255,255,255,0.06);">' +
+                        '<span style="color:' + color + ';font-weight:700;width:12px;">' + icon + '</span>' +
+                        '<span style="color:var(--text-secondary);">' + label + '</span>' +
+                        '</div>';
+                });
+                permsHtml += '</div>';
+
+                card.innerHTML = header + permsHtml;
+                list.appendChild(card);
+            });
+        }
+
+        function cyclePerm(targetId, perm) {
+            var ow = currentPermsData.overwrites.find(function (o) { return o.id === targetId; });
+            if (!ow) return;
+
+            // Cycle: null → true → false → null
+            var cur = ow.flags[perm];
+            ow.flags[perm] = cur === null ? true : cur === true ? false : null;
+
+            // Send to API
+            var flags = {};
+            flags[perm] = ow.flags[perm];
+
+            fetch('/api/' + GUILD_ID + '/channels/' + activePermsChannelId + '/permissions/' + targetId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ flags: flags })
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data.success) {
+                    renderPermsList(currentPermsData);
+                    Setcord.showToast('Permission updated', 'success', 1500);
+                } else {
+                    Setcord.showToast(data.error, 'error');
+                }
+            });
+        }
+
+        function removeOverwrite(targetId) {
+            fetch('/api/' + GUILD_ID + '/channels/' + activePermsChannelId + '/permissions/' + targetId, {
+                method: 'DELETE'
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data.success) {
+                    currentPermsData.overwrites = currentPermsData.overwrites.filter(function (o) { return o.id !== targetId; });
+                    renderPermsList(currentPermsData);
+                    Setcord.showToast('Overwrite removed', 'success');
+                }
+            });
+        }
+
+        function addPermOverwrite() {
+            var sel = document.getElementById('perms-add-role');
+            var targetId = sel.value;
+            if (!targetId) return;
+
+            // Add with all null (inherit)
+            fetch('/api/' + GUILD_ID + '/channels/' + activePermsChannelId + '/permissions/' + targetId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ flags: { ViewChannel: null } })
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                if (data.success) {
+                    openPermsCard(activePermsChannelId, document.getElementById('perms-channel-name').textContent.replace('# ', ''));
+                    Setcord.showToast('Role added', 'success');
+                }
+            });
+        }
+
+        function closePermsCard() {
+            document.getElementById('perms-card').style.display = 'none';
+            activePermsChannelId = null;
+        }
     </script>
 </body>
 

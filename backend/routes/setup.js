@@ -69,9 +69,11 @@ router.post('/:guildId/apply', requireGuildAdmin, async (req, res) => {
         }
 
         // Step 2: Create each channel
+
         for (const ch of channels) {
             const name = ch.name.trim();
-            const type = ch.type === 'voice' ? 'voice' : 'text';
+            const VALID_TYPES = ['text', 'voice', 'announcement', 'forum', 'stage'];
+            const type = VALID_TYPES.includes(ch.type) ? ch.type : 'text';
             const chResult = await bot.createChannel(req.guildId, name, type, results.categoryId);
 
             if (chResult.success) {

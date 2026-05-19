@@ -1053,6 +1053,75 @@ async function deleteAllRoles(guildId) {
     }
 }
 
+const PERM_KEYS = ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'AttachFiles',
+    'EmbedLinks', 'AddReactions', 'UseExternalEmojis', 'ManageMessages',
+    'MentionEveryone', 'Connect', 'Speak', 'MuteMembers'];
+
+async function getChannelPermissions(guildId, channelId) {
+    try {
+        const guild = await getGuild(guildId);
+        const channel = await guild.channels.fetch(channelId);
+        if (!channel) return { success: false, error: 'Channel not found' };
+        const roles = await guild.roles.fetch();
+
+        const overwrites = [...channel.permissionOverwrites.cache.values()].map(ow => {
+            const role = ow.type === 0 ? roles.get(ow.id) : null;
+            const flags = {};
+            PERM_KEYS.forEach(p => {
+                if (ow.allow.has(p)) flags[p] = true;
+                else if (ow.deny.has(p)) flags[p] = false;
+                else flags[p] = null;
+            });
+            return {
+                id: ow.id,
+                type: ow.type,
+                name: role ? role.name : (ow.id === guild.id ? '@everyone' : ow.id),
+                color: role ? role.hexColor : '#99AAB5',
+                isEveryone: ow.id === guild.id,
+                flags
+            };
+        });
+
+        const allRoles = [...roles.values()]
+            .sort((a, b) => b.position - a.position)
+            .map(r => ({ id: r.id, name: r.name, color: r.hexColor }));
+
+        return { success: true, overwrites, roles: allRoles, channelName: channel.name };
+    } catch (err) {
+        return { success: false, error: err.message };
+    }
+}
+
+async function setChannelPermission(guildId, channelId, targetId, flags) {
+    try {
+        const guild = await getGuild(guildId);
+        const channel = await guild.channels.fetch(channelId);
+        if (!channel) return { success: false, error: 'Channel not found' };
+
+        const permObj = {};
+        Object.entries(flags).forEach(([perm, value]) => {
+            permObj[perm] = value; // true=allow, false=deny, null=inherit
+        });
+
+        await channel.permissionOverwrites.edit(targetId, permObj, { reason: 'Edited by Setcord' });
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err.message };
+    }
+}
+
+async function deleteChannelPermission(guildId, channelId, targetId) {
+    try {
+        const guild = await getGuild(guildId);
+        const channel = await guild.channels.fetch(channelId);
+        if (!channel) return { success: false, error: 'Channel not found' };
+        await channel.permissionOverwrites.delete(targetId, 'Removed by Setcord');
+        return { success: true };
+    } catch (err) {
+        return { success: false, error: err.message };
+    }
+}
+
 module.exports = {
     client,
     startBot,
@@ -1083,4 +1152,9 @@ module.exports = {
     startAfkBot,
     stopAfkBot,
     getAfkStatus,
+    deleteAllChannels,
+    deleteAllRoles,
+    getChannelPermissions,
+    setChannelPermission,
+    deleteChannelPermission,
 };
